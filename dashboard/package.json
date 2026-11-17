@@ -1,0 +1,7 @@
+{
+  "name": "aegis-xau-dashboard",
+  "private": true,
+  "version": "1.0.0",
+  "description": "AEGIS XAU Phase 1 Read-Only Dashboard Module (Section 2.3)",
+  "type": "module"
+}

@@ -1,0 +1,1694 @@
+AEGIS XAU — COMPLETE MASTER PROJECT CONSTRUCTION BLUEPRINT V1.0
+Nov 18, 2026 · @Ran Masrangi
+Status, scope and how to use this blueprint
+Status: planning only. The following are true today.
+• No code has been written for AEGIS XAU.
+• No GitHub repository exists for this project.
+• No Firebase project or resource exists.
+• No MT5 terminal, EA, or broker connection exists.
+• Nothing has been built, tested, or deployed.
+• Phase 1 has NOT been approved. This document does not request approval.
+Reference documents: Master Blueprint V4, V4.1 Clarification Update, and the Founder Decisions and Safety Policy Resolution. Where this blueprint and those documents differ, those documents govern and this blueprint must be corrected.
+Labels used throughout
+• APPROVED: stated by the Founder as a requirement. Currently limited to the confirmed requirements and safety limits.
+• PROPOSED: a design or recommendation. Not binding until the Founder approves it.
+• UNRESOLVED: a Founder decision that has not been made. Referenced by its register ID (CS, AR, EA, BA, EC, DB, OS).
+• NOT VERIFIED: a technical fact, platform behaviour, or price that must be checked in a real environment before reliance. This document does not claim any such verification has occurred.
+How to use the blueprint
+Read sections 1 to 2 to understand the system and its files. Section 3 explains how to use Google AI Studio and what it cannot do. Section 4 lists the Firebase steps, many of which are manual. Sections 5 to 7 cover the Brains, the EA, and the strategy research. Sections 8 and 9 cover security and testing. Section 10 sets the phase boundaries. Section 11 covers deployment, and section 12 is the master checklist.
+Important limits of this document
+• It does not describe any tested outcome.
+• It does not claim any strategy has a profitable edge.
+• It does not replace the Founder's approval of each unresolved decision.
+• Prompts in section 3 are reference text. They must not be run until Phase 1 is approved and the blocking decisions are settled.
+• Platform names, product features, and plan terms can change. Each one marked NOT VERIFIED must be checked against current official documentation before use.
+1. Complete system architecture
+Labels: components are PROPOSED. The EA's authority model comes from V4 and is APPROVED only where stated as a confirmed requirement. Open decisions are referenced by register ID.
+1.1 Components and where they run
+Component
+Responsibility
+Runs where
+Status
+Google AI Studio
+Generates draft code and documentation during construction. Not part of the runtime system.
+Browser, Google's service
+PROPOSED tool, limits in 3.1
+GitHub repository
+Source of truth for all code, configuration templates, tests, and docs. Version history.
+GitHub
+PROPOSED; not created
+Owner dashboard
+Monitoring-only web interface in Phase 1. Owner login. Shows status with mode and freshness labels.
+Static hosting, served to owner's browser
+PROPOSED
+Firebase Authentication
+Owner identity. No public signup.
+Google-managed
+PROPOSED; configuration manual
+Cloud Firestore
+Structured records: status, decisions, logs, verified trades, settings. Not a command channel.
+Google-managed
+PROPOSED
+Backend API
+Validates telemetry and dashboard requests. Coordinates Brains and the Decision Engine. Issues signed commands. Writes trading records.
+Managed server runtime, one region
+PROPOSED; host choice OS-2
+Brains 01 to 12
+Analysis modules that produce outputs with status and freshness. Authoritative list in 1.3.
+Backend, except Brain 12 placement (BA-1)
+PROPOSED; none implemented
+Central Decision Engine
+Combines Brain outputs into BUY candidate, SELL candidate, WAIT, or REJECT, with reasons.
+Backend
+PROPOSED
+Risk and Safety Supervisor
+Final authority over new exposure. Runs in the EA.
+MT5 EA on trading host
+PROPOSED; limits APPROVED
+MT5 Expert Advisor
+Broker integration, data reading, order sending, reconciliation, local protections, telemetry signing.
+Trading host: VPS or owner machine (OS-1)
+PROPOSED
+MT5 terminal
+Runs the EA and connects to the Exness server.
+Trading host
+PROPOSED
+Exness MT5 server
+Broker execution and transaction records.
+External
+External
+TradingView
+Readiness and display of chart state. Not a trading source.
+External service
+PROPOSED; plan and route OS-3
+Logging and audit
+Event records, owner actions, decisions, transactions.
+Firestore collections, EA files
+PROPOSED
+Monitoring and alerting
+Heartbeat checks, health status, alert delivery.
+Backend, Firebase, EA alerts
+PROPOSED; channels to choose
+Security infrastructure
+Secret manager, IAM roles, security rules, signing keys.
+Cloud provider services
+PROPOSED
+1.2 How components communicate
+1.  EA to backend: HTTPS, signed telemetry. Each message has an instance ID, mode, sequence, timestamps, and a signature. Rejected messages are logged.
+2.  Backend to EA: signed commands, pulled by the EA over HTTPS. Each command has an expiry and a class (N, R, or A). The EA verifies the signature, identity, expiry, and sequence before acting.
+3.  Backend to Firestore: writes through a privileged service identity. Browsers never write trading records.
+4.  Dashboard to Firebase: reads status through the Firebase client SDK under security rules. Phase 1 is read-only.
+5.  Dashboard to backend: authenticated API calls for permitted requests only. In Phase 1, the command path is disabled.
+6.  TradingView to backend: alert webhook with a shared secret. Readiness information only.
+7.  Brains to Decision Engine: in-process calls in the backend. If Brains are moved out of the backend later, they use the same authenticated channel.
+8.  EA to broker: standard MT5 trade and history functions, through the terminal.
+Rule: no component communicates with the EA except through the signed command channel or the signed telemetry channel. Firestore is not a command channel.
+1.3 Authoritative twelve Brains
+The list is APPROVED as the authoritative list for this project. Identities must not change.
+01 Macro and Fundamental Intelligence 02 Market Regime Intelligence 03 Cross-Market Correlation Intelligence 04 Liquidity Mapping Intelligence 05 Order Flow Intelligence 06 Market Structure Intelligence 07 Volatility Intelligence 08 Momentum and Displacement Intelligence 09 SMC Setup Intelligence 10 Session Intelligence 11 Execution and Trade Quality Intelligence 12 Trade Management Intelligence
+Supporting concepts (SMC sweeps, order blocks, fair value gaps, BOS and CHOCH, market structure shift, premium and discount, displacement) sit inside Brains 04, 06, 08, and 09, as stated in V4. They are not Brains.
+1.4 Decision Engine and Supervisor
+The Decision Engine outputs BUY candidate, SELL candidate, WAIT, or REJECT. A candidate is a request for the EA to evaluate an entry. It is not an order. The Supervisor in the EA applies the full approval chain in V4 section 6, and may refuse any candidate. Backend and dashboard cannot disable the Supervisor.
+1.5 Where this architecture is still open
+• Trading host: VPS or owner machine (OS-1).
+• Backend region and provider (OS-2).
+• Brain 12 placement: backend, EA, or split (BA-1). The recommendation in the Founder Decisions document is split.
+• Brain 11 gate role (BA-3).
+• Signing scheme: asymmetric or HMAC fallback (OS-11), subject to verification B1 and B2 (NOT VERIFIED).
+• TradingView use (OS-3), subject to terms review (NOT VERIFIED).
+2. Complete file and folder structure
+Labels: the tree is PROPOSED. It is not created. No repository exists yet. Naming may change at repository creation; any change must be recorded here.
+Create-by column: AI Studio means drafted in Google AI Studio and copied in. Manual means the Founder creates it by hand. CLI means a command-line tool generates it. MetaEditor means the file is created or compiled in MetaEditor on Windows. NOT VERIFIED where generated output must still be checked.
+2.1 Repository root: aegis-xau/
+Path
+Purpose
+Used by
+Mandatory
+Create by
+Depends on
+README.md
+Project overview, setup order, status labels
+Founder, all
+Mandatory
+AI Studio, then reviewed
+None
+.gitignore
+Excludes secrets, env files, build output, terminal data
+Git
+Mandatory
+Manual, from template
+None
+.env.example
+Lists variable names only. No values.
+Backend, dashboard, scripts
+Mandatory
+AI Studio
+Section 4.9
+.editorconfig
+Line endings and indentation
+All editors
+Optional
+AI Studio
+None
+docs/
+All planning and reference documents
+Founder
+Mandatory
+Manual copy of blueprint files
+None
+docs/MASTER_BLUEPRINT.md
+This blueprint, copied in
+Founder
+Mandatory
+Manual
+None
+docs/DECISIONS.md
+Founder decision register with approval dates
+Founder, audits
+Mandatory
+Manual
+Founder approvals
+docs/SAFETY_POLICY.md
+Approved accounting and safety policy
+EA, backend, tests
+Mandatory
+Manual, after approval
+DECISIONS.md
+docs/AUDIT_LOG.md
+Dated audit records with evidence references
+Auditors
+Mandatory
+Manual
+Audit runs
+.github/workflows/ci.yml
+Automated checks on push
+GitHub
+Optional until Phase 1 CI gate
+AI Studio
+Tests exist
+2.2 Backend: backend/
+Path
+Purpose
+Used by
+Mandatory
+Create by
+Depends on
+backend/package.json
+Dependencies, scripts
+Node, CI
+Mandatory
+AI Studio, then CLI check
+None
+backend/tsconfig.json
+TypeScript settings
+Build
+Mandatory
+AI Studio
+package.json
+backend/src/index.ts
+Service entry point
+Runtime
+Mandatory
+AI Studio
+config
+backend/src/config/env.ts
+Reads and validates environment values, fails if missing
+All backend
+Mandatory
+AI Studio
+.env.example
+backend/src/auth/verifyOwner.ts
+Verifies Firebase ID token and owner identity
+All owner endpoints
+Mandatory
+AI Studio
+Firebase Auth config
+backend/src/api/status.ts
+Read-only status endpoint for Phase 1
+Dashboard
+Mandatory
+AI Studio
+verifyOwner
+backend/src/api/disabled.ts
+Returns refused for all command and settings endpoints in Phase 1
+Dashboard
+Mandatory in Phase 1
+AI Studio
+verifyOwner
+backend/src/telemetry/receive.ts
+Receives signed EA telemetry, validates, stores
+EA telemetry
+Mandatory
+AI Studio
+signing.ts, validate.ts
+backend/src/telemetry/validate.ts
+Schema, range, mode, and freshness checks
+receive.ts
+Mandatory
+AI Studio
+None
+backend/src/crypto/verify.ts
+Signature verification for telemetry
+receive.ts
+Mandatory
+AI Studio
+Key config; OS-11
+backend/src/crypto/replay.ts
+Message ID and sequence store
+receive.ts
+Mandatory
+AI Studio
+Firestore
+backend/src/commands/queue.ts
+Command queue, expiry, redelivery state
+Command pipeline
+Mandatory from Phase 3
+AI Studio
+Section 8
+backend/src/commands/sign.ts
+Command signing with backend key
+queue.ts
+Mandatory from Phase 3
+AI Studio
+Secret manager; OS-11
+backend/src/brains/brain01.ts to brain12.ts
+One file per Brain: input validation, calculation, output
+Engine
+Mandatory once implemented
+AI Studio, per phase
+Section 5 specs
+backend/src/brains/common/output.ts
+Standard Brain output type with status, freshness, inputs hash
+All Brains
+Mandatory
+AI Studio
+None
+backend/src/engine/decision.ts
+Central Decision Engine
+Commands and dashboard
+Mandatory in Phase 2
+AI Studio
+Brains
+backend/src/data/sources/*.ts
+One adapter per external source, each with licence note
+Brains
+Mandatory per source used
+AI Studio
+Source decisions
+backend/src/firestore/repo.ts
+Only module that writes Firestore records
+All writers
+Mandatory
+AI Studio
+Section 4 schema
+backend/src/logging/audit.ts
+Appends audit records
+Owner actions
+Mandatory
+AI Studio
+repo.ts
+backend/src/monitoring/heartbeat.ts
+Detects missing EA telemetry, raises alerts
+Monitoring
+Mandatory
+AI Studio
+repo.ts
+backend/test/*.test.ts
+Unit tests
+CI
+Mandatory
+AI Studio
+Each module
+2.3 Dashboard: dashboard/
+Path
+Purpose
+Used by
+Mandatory
+Create by
+Depends on
+dashboard/package.json
+Dependencies and build scripts
+Build
+Mandatory
+AI Studio
+None
+dashboard/src/main.tsx
+Entry point and routing
+Browser
+Mandatory
+AI Studio
+App shell
+dashboard/src/auth/OwnerGate.tsx
+Blocks all views for non-owner
+All views
+Mandatory
+AI Studio
+Firebase Auth
+dashboard/src/views/Overview.tsx
+Section 1 of V4 dashboard
+Owner
+Mandatory
+AI Studio
+status API
+dashboard/src/views/Brains.tsx
+Twelve Brain monitor, NOT IMPLEMENTED shown until tested
+Owner
+Mandatory
+AI Studio
+status API
+dashboard/src/views/Market.tsx
+Market analysis, mode and freshness labels
+Owner
+Mandatory
+AI Studio
+status API
+dashboard/src/views/TradingView.tsx
+Readiness display
+Owner
+Mandatory
+AI Studio
+status API
+dashboard/src/views/Connection.tsx
+EA and broker connection status
+Owner
+Mandatory
+AI Studio
+status API
+dashboard/src/views/Risk.tsx
+Risk and Supervisor state, realised and floating shown separately
+Owner
+Mandatory
+AI Studio
+status API
+dashboard/src/views/Strategy.tsx
+Strategy research record
+Owner
+Mandatory
+AI Studio
+research files
+dashboard/src/views/Trades.tsx
+Verified trade history, per mode
+Owner
+Mandatory
+AI Studio
+verified records
+dashboard/src/views/Health.tsx
+System health and diagnostics
+Owner
+Mandatory
+AI Studio
+status API
+dashboard/src/views/Alerts.tsx
+Alerts; acknowledgement only in Phase 1
+Owner
+Mandatory
+AI Studio
+alerts store
+dashboard/src/views/Logs.tsx
+Logs and audit trail, read-only
+Owner
+Mandatory
+AI Studio
+logs store
+dashboard/src/views/Settings.tsx
+Read-only in Phase 1
+Owner
+Mandatory
+AI Studio
+status API
+dashboard/src/components/Status.tsx
+Status badge with label text, not colour alone
+All views
+Mandatory
+AI Studio
+None
+dashboard/src/components/ModeLabel.tsx
+DEMO or LIVE label on every trading figure
+All views
+Mandatory
+AI Studio
+None
+dashboard/src/components/Freshness.tsx
+Freshness display per field
+All views
+Mandatory
+AI Studio
+None
+dashboard/src/lib/firebase.ts
+Firebase client setup from public config
+Dashboard
+Mandatory
+AI Studio
+Section 4
+dashboard/src/lib/api.ts
+Authenticated API client
+Dashboard
+Mandatory
+AI Studio
+verifyOwner
+dashboard/public/
+Static assets
+Browser
+Mandatory
+AI Studio
+None
+2.4 Expert Advisor: ea/
+Path
+Purpose
+Used by
+Mandatory
+Create by
+Depends on
+ea/AegisXAU.mq5
+Main EA: initialisation, event handlers
+MT5
+Mandatory
+AI Studio draft, MetaEditor compile
+Include files
+ea/Include/Config.mqh
+Constants and input parameters, grouped
+All EA files
+Mandatory
+AI Studio draft, MetaEditor
+None
+ea/Include/Broker.mqh
+Symbol specs, account mode, suffix matching
+Main, Orders
+Mandatory
+AI Studio draft, MetaEditor
+Config
+ea/Include/Market.mqh
+Closed-bar reading on M15, M5, M1
+Main, Brains data
+Mandatory
+AI Studio draft, MetaEditor
+Broker
+ea/Include/RiskState.mqh
+Persisted daily and weekly totals, streak, pause
+Supervisor
+Mandatory
+AI Studio draft, MetaEditor
+Accounting policy (CS, AR)
+ea/Include/Supervisor.mqh
+Approval chain for class N; limit checks
+Orders
+Mandatory
+AI Studio draft, MetaEditor
+RiskState, Broker
+ea/Include/Orders.mqh
+Order send, stop enforcement, request references
+Main
+Mandatory
+AI Studio draft, MetaEditor
+Supervisor
+ea/Include/Reconcile.mqh
+Startup and periodic reconciliation with history
+Main
+Mandatory
+AI Studio draft, MetaEditor
+Broker
+ea/Include/Protect.mqh
+Mandatory local protections and fail-closed state
+Main, Orders
+Mandatory
+AI Studio draft, MetaEditor
+None
+ea/Include/Commands.mqh
+Command poll, verify, execute by class, acknowledge
+Main
+Mandatory from Phase 3
+AI Studio draft, MetaEditor
+Crypto.mqh
+ea/Include/Crypto.mqh
+Signature verification
+Commands, Telemetry
+Mandatory once approved
+AI Studio draft; verify B1, B2
+NOT VERIFIED
+ea/Include/Telemetry.mqh
+Signed telemetry messages
+Main
+Mandatory
+AI Studio draft, MetaEditor
+Crypto.mqh
+ea/Include/Logging.mqh
+Local log files with rotation
+All
+Mandatory
+AI Studio draft, MetaEditor
+None
+ea/Include/Brain12Mgmt.mqh
+Deterministic stop management, Phase 3 only
+Main
+Optional; Phase 3
+AI Studio draft, MetaEditor
+BA-1, BA-2
+ea/tests/*.mq5
+Test scripts run in MetaEditor or Strategy Tester
+Founder
+Mandatory
+AI Studio draft
+Include files
+ea/config/parameters.set
+Parameter set files for DEMO
+MT5
+Mandatory
+Manual, owner-chosen values
+DECISIONS.md
+2.5 Other folders
+Path
+Purpose
+Used by
+Mandatory
+Create by
+Depends on
+tradingview/aegis_readiness.pine
+Non-trading readiness script
+TradingView
+Optional until OS-3 is settled
+AI Studio draft, pasted into TradingView
+OS-3, NOT VERIFIED
+research/specs/strategy_A.md, strategy_B.md, strategy_C.md
+Fixed written specifications
+Research
+Mandatory before any test
+Manual, Founder approved
+Section 7
+research/configs/
+Test configurations with date ranges and costs
+Research
+Mandatory
+Manual
+Specs
+research/results/
+Outputs labelled with source and date
+Strategy Lab
+Mandatory
+Generated by tester, copied in
+Configs
+firebase/firestore.rules
+Firestore security rules
+Firebase
+Mandatory
+AI Studio, Manual review
+Section 4.5
+firebase/firestore.indexes.json
+Composite indexes
+Firestore
+Mandatory when queries need them
+Generated by CLI
+Queries
+firebase/firebase.json
+Firebase configuration
+CLI
+Mandatory
+CLI init
+Section 4
+firebase/.firebaserc
+Project alias
+CLI
+Mandatory
+CLI init
+Firebase project
+firebase/storage.rules
+Storage rules
+Firebase
+Optional; only if Storage used
+AI Studio
+Section 4.4
+tests/emulator/
+Rules tests against emulator
+CI, Founder
+Mandatory
+AI Studio
+Emulator
+tests/integration/
+Backend with emulator and fake EA messages
+CI
+Mandatory
+AI Studio
+backend
+tests/security/
+Signature, replay, and auth tests
+CI
+Mandatory
+AI Studio
+backend, ea
+scripts/
+Local helper scripts, no secrets
+Founder
+Optional
+AI Studio
+None
+deploy/
+Deployment definitions, no secrets
+Founder
+Mandatory for DEMO
+AI Studio
+Section 11
+monitoring/alerts.yaml
+Alert rule definitions
+Monitoring
+Mandatory before DEMO
+AI Studio
+Section 11
+Not in the repository, by design: service-account keys, passwords, tokens, MT5 credentials, signing private keys, and any file containing a secret. These live only in their secure stores (section 8).
+3. Google AI Studio build instructions
+3.1 What Google AI Studio can and cannot do
+Labels: the limits below are NOT VERIFIED against current product documentation and must be checked before reliance. Google changes AI Studio features often.
+Can do (as a drafting assistant):
+• Draft text, documentation, and source files from your instructions.
+• Explain generated code when asked.
+• Revise a file when given its current content and a specific error.
+Cannot do (or must not be relied on for):
+• Access your Firebase project, GitHub account, MT5 terminal, VPS, or broker account. Any value it needs must be supplied by you, and secrets must never be supplied.
+• Compile MQL5 or run the MT5 Strategy Tester. Compilation and tests happen in MetaEditor and MT5 on Windows, and the results must be recorded by you.
+• Run Firebase emulators, deploy rules, or deploy functions. These are CLI steps you run.
+• Guarantee correct code. Generated code must be read, tested, and audited.
+• Hold the project across sessions reliably. Keep the blueprint and decisions in the repository, and paste the relevant section into each new session.
+• Act as a secrets manager. Never paste keys, tokens, passwords, or service-account files into any prompt.
+• Make decisions. Every Founder decision in DECISIONS.md must come from you.
+Recommended supporting tools (PROPOSED)
+• GitHub: source control and audit history. Account required.
+• Git, installed locally, or GitHub Desktop.
+• Visual Studio Code, or any editor, for reading and editing files.
+• Node.js LTS, for the backend and dashboard build. Version to be checked at setup.
+• Firebase CLI, for project setup, rules testing, and deployment.
+• Java runtime, required by the Firebase Emulator Suite on some platforms. NOT VERIFIED for your setup.
+• Windows machine or VPS with MetaTrader 5 and MetaEditor, for MQL5 compilation and tests.
+• Python, optional, only for offline research analysis.
+3.2 Starting setup, before any code
+1.  Save this blueprint and the decisions documents into a local folder named docs. Do not start Google AI Studio yet.
+2.  Create the GitHub repository by hand, private, with a README. Record the repository name in DECISIONS.md. Only do this after Phase 1 is approved. Until then, keep the blueprint in a local folder.
+3.  Install the local tools in section 3.1. Record versions in docs/AUDIT_LOG.md.
+4.  Create the Firebase project by hand (section 4.1).
+5.  Create the MT5 demo account and terminal on the trading host, by hand, outside this blueprint. Record only the broker server name, never the password.
+3.3 Build order
+Each stage closes with a verification step. Do not start a stage until the previous stage passes and you have approved it.
+Stage
+Build
+Depends on
+Verification
+Phase
+0
+Repository skeleton: README, .gitignore, .env.example, docs folder
+Setup in 3.2
+Files exist; no secrets
+Pre-Phase 1
+1
+Firebase configuration files and rules, with emulator tests
+Section 4
+Emulator tests pass; denial tests pass
+Phase 1
+2
+Backend skeleton: config, owner auth, status endpoint, disabled endpoints
+Stage 1
+Unit tests; denial for non-owner; endpoints refuse writes
+Phase 1
+3
+Telemetry receiver with signature, replay, and freshness checks
+Stage 2, OS-7, OS-11
+Security tests for each rejection type
+Phase 1
+4
+Dashboard, read-only, all views with labels
+Stage 2
+Renders each state; no write controls; screenshots
+Phase 1
+5
+EA read-only: init, broker specs, closed bars, telemetry send
+Stage 3, B1 to B5 verified
+Compile in MetaEditor; run in terminal; logs
+Phase 1
+6
+Phase 1 audit
+Stages 0 to 5
+Evidence list in section 9
+Phase 1 gate
+7
+Accounting policy and RiskState in EA and backend
+Founder approval of CS and AR
+Unit tests; Strategy Tester checks
+Phase 2
+8
+Brains, one at a time, in the order of section 5
+Specs approved
+Tests per Brain
+Phase 2
+9
+Decision Engine and Supervisor logic
+Stage 7, 8
+Decision tests; refusal tests
+Phase 2
+10
+Strategy research harness and reports
+Section 7 specs
+Reproducible runs; recorded data
+Phase 2
+11
+Phase 2 audit
+Stages 7 to 10
+Evidence list
+Phase 2 gate
+12
+EA order path on DEMO only, with Supervisor
+Phase 2 approved
+Demo tests; broker transaction checks
+Phase 3
+13
+Position management, reconciliation, restart, emergency close
+Stage 12
+Failure simulations, section 9
+Phase 3
+14
+Phase 3 audit and 8 to 12 weeks DEMO evaluation
+Stage 13
+Forward evaluation records
+Phase 3 gate
+3.4 Prompts for each stage
+These prompts are reference text. Do not run any prompt until its stage is approved. Each prompt assumes that the blueprint and the decisions file are pasted into the session first. Replace the bracketed placeholders with your own values. Never type a secret.
+Prompt 0, repository skeleton
+You are drafting files for a private project named AEGIS XAU. Read the attached docs. Create README.md, .gitignore for a Node.js and MetaTrader project that excludes .env files, keys, and terminal data, and .env.example containing variable names only, with empty values and a comment for each. Do not include any secret, URL with credentials, or sample key. Mark any unknown value as TODO. Output each file separately with its path.
+Prompt 1, Firebase rules
+Draft firestore.rules for the AEGIS XAU project. Owner-only access, identified by the Firebase Authentication UID stored in an approved configuration value, not hard-coded. Deny by default. Browser clients may read status collections only. Browser clients may not write any collection in this phase. Trading collections are under modes/demo and modes/live; deny any other mode value. No collection group queries. Include comments explaining each rule. Then list every rule test case a developer should write for the Firebase emulator: allowed owner read, denied non-owner read, denied any write, denied unknown mode. Do not invent a UID.
+Prompt 2, backend skeleton
+Draft a TypeScript backend skeleton with these modules only: config/env.ts that reads and validates required variables and fails at startup if any is missing; auth/verifyOwner.ts that verifies a Firebase ID token and checks the owner identifier from configuration; api/status.ts, read-only; api/disabled.ts that returns HTTP 403 with a JSON reason for every command and settings endpoint. Do not implement any trading function. Do not write any Firestore write path in this stage. Include unit tests for missing config, invalid token, non-owner token, and disabled endpoints. State which tests you expect to pass and which depend on the emulator.
+Prompt 3, telemetry receiver
+Draft telemetry/receive.ts, telemetry/validate.ts, crypto/verify.ts, and crypto/replay.ts. Requirements: reject bad signatures, unknown key IDs, mismatched instance or mode, expired messages, timestamps outside the configured tolerance, repeated message IDs, and non-increasing sequence numbers. Store replay state in Firestore through repo.ts only. Do not choose a signature algorithm: read it from configuration and leave a clearly marked TODO referencing decision OS-11. Write one unit test per rejection type.
+Prompt 4, dashboard
+Draft a read-only React dashboard with the views listed in the file structure. Every trading value must display its mode label and its freshness. Brain views must show NOT IMPLEMENTED until a status field says otherwise. Do not include any control that writes data, except alert acknowledgement if the decision DB-2 is approved. Provide screenshot-friendly layouts for phone and desktop widths. Do not hard-code any sample value that looks like live data; use an empty state.
+Prompt 5, EA read-only
+Draft an MQL5 Expert Advisor with the include files in the file structure. Phase 1 scope: read symbol specifications, account trade mode, and closed bars on M15, M5, and M1; send signed telemetry; write local logs. The EA must not call OrderSend, OrderSendAsync, PositionModify, PositionClose, or any trade function. Add a compile-time guard that fails if trade functions are referenced. Use only broker-documented properties. Mark every property you are not certain exists as TODO for verification in MetaEditor. Do not invent a minimum stop distance. Provide the compile instructions for MetaEditor.
+3.5 How to inspect generated code
+1.  Read each file in full. Do not accept a file you have not read.
+2.  Search for trading functions in the EA: OrderSend, OrderSendAsync, PositionModify, PositionClose, CTrade. In Phase 1 there must be none.
+3.  Search for literal values: keys, tokens, passwords, account numbers, project IDs with credentials, and URLs containing credentials.
+4.  Check every TODO against section 12, and every UNRESOLVED decision against DECISIONS.md.
+5.  Check that no default is presented as an approved value.
+6.  Check imports and paths against the file structure in section 2.
+3.6 How to detect missing files
+Compare the repository tree against section 2. For each missing file, record in docs/AUDIT_LOG.md whether it is intentionally deferred or a defect. Run the build and the compile. Any error that names a missing file is a defect, not a reason to create a placeholder that hides it.
+3.7 How to correct errors
+• Paste the exact error text, the file path, and the full file into the session. Do not paraphrase the error.
+• Ask for the smallest change that fixes it, and forbid changes outside the named file.
+• Reject any fix that removes a security check, a test, or a rejection rule to make a test pass.
+• Record each correction and its reason in the audit log.
+3.8 How to verify each stage
+Each stage has three checks: the automated tests in its section 9 list pass with recorded output; a manual review against the acceptance criteria in section 10; and a check that nothing outside the stage's scope was changed. A stage passes only when all three are recorded.
+3.9 Export and connect to GitHub
+1.  Download the generated files from the session, or copy each file into the local folder. Check the paths.
+2.  Run git init in the local folder, review the staged file list, and confirm no secret or environment file is staged.
+3.  Create the first commit with a message that names the stage.
+4.  Connect to GitHub using the account's standard method: GitHub Desktop, or a personal access token entered into the operating system credential store. Never paste a token into a prompt or a file.
+5.  Push to the private repository. Record the commit hash in the audit log.
+NOT VERIFIED: direct repository export or sync features within AI Studio. Check the current interface before relying on them.
+4. Firebase setup guide
+Labels: all steps are PROPOSED. Console screens, plan requirements, pricing, region rules, and feature availability are NOT VERIFIED and must be checked on the official Firebase documentation at the time of setup. Nothing in this section has been run.
+4.1 Project creation (MANUAL)
+1.  Sign in to the Firebase console with the Founder's Google account. Use an account with two-factor authentication enabled.
+2.  Create one project. Name it with a neutral identifier. Do not include the word production, broker, or any account number.
+3.  Choose the default resource location at creation. Firestore location cannot be changed later (NOT VERIFIED). Recommended: the region closest to the backend host (OS-2).
+4.  Enable Google Analytics only if you want it. It is not required.
+5.  Record the project ID in docs/DECISIONS.md. Do not record any key or credential.
+Billing: some services used by a backend, including Cloud Functions and Cloud Run, require the Blaze pay-as-you-go plan (NOT VERIFIED). Upgrading is a manual financial decision and needs a budget alert set in Google Cloud Billing before deployment.
+4.2 Authentication (MANUAL configuration, generated rules)
+1.  In Authentication, enable one sign-in method only. Recommended: Google sign-in, or email and password with multi-factor enabled (DB-6 decides the method).
+2.  Create the owner account manually. Record its UID in backend configuration as OWNER_UID. The UID is an identifier, not a secret, but keep it out of the public repository in the first stage.
+3.  Prevent new account creation. Method depends on the product tier: Firebase Authentication may offer a setting to disable signups, and some controls require Identity Platform (NOT VERIFIED). If not available, rely on server-side owner checks and the rule that only OWNER_UID is accepted.
+4.  Enable multi-factor authentication for the owner account if the chosen method supports it (NOT VERIFIED for each method).
+5.  Set authorised domains to the dashboard domain only.
+4.3 Cloud Firestore (MANUAL creation, generated schema)
+1.  Create the database in production mode, so that default-open rules are never active. Do not use test mode.
+2.  Collections and document shapes are proposed in section 4.3 of the schema below. Create no collections by hand; the backend creates them.
+3.  Enable point-in-time recovery only after checking availability for the chosen edition (NOT VERIFIED).
+Schema (PROPOSED, from V4 section 10):
+• status/current: single document with component status, each field with timestamp and freshness.
+• modes/demo/... and modes/live/...: decisions, brain_outputs, risk_events, commands, order_requests, executions, trades, analytics, telemetry_status, strategy_runs. Each document has a mode field and a source field.
+• config/global: non-trading preferences.
+• config/modes/demo and config/modes/live: mode-specific settings, versioned.
+• admin_audit: owner actions, no trading figures.
+• system: component health.
+• replay: message IDs and sequence state for the telemetry channel. Backend-only.
+4.4 Storage (OPTIONAL, default not used)
+Use Cloud Storage only if reports or exported files must be stored. Default: not enabled. If enabled, rules deny all access except backend service identity. Storage must not hold trading records that are also in Firestore.
+4.5 Security rules (GENERATED, MANUALLY REVIEWED, DEPLOYED BY CLI)
+• Drafted in Stage 1 (section 3.4, prompt 1).
+• Principles: deny by default; owner-only reads by OWNER_UID; no browser writes in Phase 1; mode segment restricted to demo and live; no collection group queries.
+• Tested in the Firebase Emulator Suite before any deployment. Test output recorded in docs/AUDIT_LOG.md.
+• Deployment: firebase deploy --only firestore:rules, run by the Founder after Phase 1 approval.
+4.6 Cloud Functions or backend runtime (DECISION OS-2)
+The backend may run as Cloud Functions, Cloud Run, or a separate managed server. This is UNRESOLVED (OS-2). Each option needs its own deployment and billing check. Recommended for review: a single containerised service, because a long-running poller is simpler to reason about than many functions. NOT VERIFIED for cost and cold-start behaviour.
+4.7 App Check (RECOMMENDED, configure after dashboard exists)
+App Check helps block requests that do not come from your app. It does not replace owner authentication and must never be treated as an authorisation control. Configure for the dashboard web app and for Firestore once the dashboard runs. NOT VERIFIED for current provider setup.
+4.8 Indexes
+Generated by the CLI when a query requires a composite index. Keep firestore.indexes.json in the repository. Do not add indexes speculatively.
+4.9 Environment variables and secrets
+• Public values that may appear in dashboard code: Firebase web configuration (API key, project ID, app ID). These identify the project. They are not secrets and do not grant access. Security is enforced by rules and owner checks.
+• Private values that must never be in the repository: service-account credentials, backend signing private key, telemetry keys, any token.
+• Storage: backend secrets in the cloud secret manager, read at runtime by the service identity. The EA's keys stay on the trading host in restricted files (V4 section 9).
+• .env.example lists names only. A developer copies it to .env on their own machine. The .env file is ignored by git.
+4.10 Backups
+• Firestore managed export, scheduled, to a storage location with restricted access (NOT VERIFIED for setup steps and cost).
+• The trading host keeps its own copies of EA state files, and the owner copies them off the host on a schedule (OS-9).
+• Restore procedure is a required artifact before DEMO. It is not yet written (OS-12).
+4.11 Monitoring
+• Cloud Logging for backend and function logs. Retention to be set (OS-5).
+• Alert policies for: missing telemetry beyond the heartbeat limit (EA-5); rejected signatures above a threshold; authentication failures above a threshold; backend error rate. Thresholds are UNRESOLVED until values are set.
+• Alert channel: email to the owner at minimum. Other channels are optional.
+4.12 Deployment (manual approval gates)
+1.  Emulator tests pass.
+2.  Founder approves the stage.
+3.  Founder runs the deploy command for rules, indexes, and backend, one at a time, reviewing the output of each.
+4.  Post-deploy check: unauthenticated and non-owner requests are refused. Recorded in the audit log.
+4.13 What must be done manually
+• Project creation, billing choice, region choice.
+• Owner account creation and MFA setup.
+• Sign-in method choice.
+• Secret values entry into the secret manager.
+• Each deploy command, run by the Founder.
+• Backup and alert setup.
+4.14 What can be generated through code
+• Rules files, rule test cases, backend code, dashboard code, configuration templates, indexes file (from CLI), and deployment definitions. Each still requires review and test before use.
+5. Complete twelve-Brain implementation
+Labels: identities are APPROVED. Each Brain's specification, class, inputs, and tests are PROPOSED. No Brain is implemented or tested. Every Brain has the same common rules, stated once here and applied to each.
+5.0 Common rules for all twelve
+• Output record: each Brain writes one output per evaluation with brain ID, spec version, status (OK, STALE, DATA INSUFFICIENT, ERROR, NOT IMPLEMENTED), timestamps of every input used, a hash of the inputs, the result, and a reason string.
+• Failure behaviour: missing, stale, or invalid input gives DATA INSUFFICIENT or STALE. A Brain never guesses to fill a gap.
+• Decision authority: no Brain sends orders, changes stops, or changes settings. Only the Decision Engine combines outputs, and only the EA acts.
+• Communication: in-process call inside the backend. The output is written to modes/{mode}/brain_outputs through repo.ts. Brain 12 placement is UNRESOLVED (BA-1).
+• Versioning: every change to a specification creates a new version. Old outputs keep their version.
+• Testing before status IMPLEMENTED: unit tests on fixed inputs, golden-output tests, failure-state tests, and a repaint test for any rule using closed bars. Out-of-sample evidence is required for any output that affects a decision.
+• Confidence: no probability is displayed until calibrated on out-of-sample data.
+Brain 01: Macro and Fundamental Intelligence
+• Purpose: give event and rate context for Gold.
+• Responsibilities: classify verified scheduled events by impact; mark event windows; flag unknown windows.
+• Inputs: timestamped economic calendar from a verified source (source UNRESOLVED, BA-5 and licence review).
+• Outputs: event list with impact class, window start and end, source, and status.
+• Class: deterministic classification; statistical study of event windows, later.
+• Dependencies: news source, BA-5.
+• Failure behaviour: source unavailable gives STALE, and the Engine treats the window as unknown (BA-5).
+• Testing: parsing tests on sample calendar files, timezone tests, missing-source tests.
+Brain 02: Market Regime Intelligence
+• Purpose: classify the current market as trend, range, high or low volatility, or transition.
+• Responsibilities: compute regime from closed bars using defined thresholds.
+• Inputs: closed M15 bars; ADX and EMA computed from them.
+• Outputs: regime label, indicator values, bar timestamps.
+• Class: deterministic thresholds, with statistical calibration on history.
+• Dependencies: Market data from EA (section 6).
+• Failure behaviour: fewer bars than the indicator needs gives DATA INSUFFICIENT.
+• Testing: golden tests on fixed bar sets; threshold sensitivity tests; repaint test.
+Brain 03: Cross-Market Correlation Intelligence
+• Purpose: report the relationship between XAUUSD and DXY, yields, and correlated instruments.
+• Responsibilities: align series by timestamp; compute rolling correlation with a stability check; flag breakdowns.
+• Inputs: DXY, bond yields, and other series. Sources UNRESOLVED (BA-6 and licence review).
+• Outputs: correlation values, window length, stability flag, breakdown flag.
+• Class: statistical.
+• Dependencies: BA-6; alignment with EA bar times.
+• Failure behaviour: missing series gives DATA INSUFFICIENT for the affected pair only.
+• Testing: known-series tests, alignment tests across time zones, breakdown-detection tests.
+Brain 04: Liquidity Mapping Intelligence
+• Purpose: map liquidity levels and detect sweeps.
+• Responsibilities: equal highs and lows, session and day and week highs and lows, swing points; sweep detection with wick, close, and reclaim rules (supporting concept held here).
+• Inputs: closed bars on M15 and M5; session windows from Brain 10.
+• Outputs: level list with type and source timestamp; sweep events with the rule that matched.
+• Class: deterministic.
+• Dependencies: Brain 10 for session boundaries; Brain 06 for swing definitions if shared.
+• Failure behaviour: no session data gives DATA INSUFFICIENT for session-based levels only.
+• Testing: fixed-chart level tests, sweep rule tests with positive and negative examples, repaint test.
+Brain 05: Order Flow Intelligence
+• Purpose: report pressure and imbalance evidence from available volume.
+• Responsibilities: compute bar-based pressure measures from broker tick volume.
+• Inputs: closed bars with tick volume from the broker.
+• Outputs: pressure values, imbalance flags, data-source label stating tick volume.
+• Class: deterministic.
+• Dependencies: EA bar reading.
+• Failure behaviour: zero or missing volume gives DATA INSUFFICIENT.
+• Limitation: tick volume is not global institutional volume. Every output must carry that label.
+• Testing: fixed-bar tests; label-presence tests.
+Brain 06: Market Structure Intelligence
+• Purpose: report swings and structure state.
+• Responsibilities: swing detection by fixed rule; BOS, CHOCH, and market structure shift (supporting concepts held here).
+• Inputs: closed bars on M15 and M5.
+• Outputs: swing list, structure state, event list with rule IDs.
+• Class: deterministic.
+• Dependencies: none beyond bars.
+• Failure behaviour: insufficient swings give DATA INSUFFICIENT.
+• Testing: fixed-chart structure tests; repaint test; definition-version test.
+Brain 07: Volatility Intelligence
+• Purpose: report volatility level and changes.
+• Responsibilities: ATR, bar range, expansion and contraction flags, unusual movement flag.
+• Inputs: closed bars on M1, M5, M15.
+• Outputs: ATR values, range ratios, flags.
+• Class: deterministic and statistical.
+• Dependencies: bars.
+• Failure behaviour: missing bars give DATA INSUFFICIENT.
+• Testing: known-value tests, threshold tests.
+Brain 08: Momentum and Displacement Intelligence
+• Purpose: detect strong directional movement and momentum.
+• Responsibilities: body-to-range ratio, body versus ATR, displacement flag (supporting concept held here).
+• Inputs: closed bars; ATR from Brain 07.
+• Outputs: displacement events, momentum values, rule IDs.
+• Class: deterministic.
+• Dependencies: Brain 07.
+• Failure behaviour: missing ATR gives DATA INSUFFICIENT.
+• Testing: fixed-bar tests with positive and negative cases; repaint test.
+Brain 09: SMC Setup Intelligence
+• Purpose: combine liquidity, structure, and displacement into setup candidates.
+• Responsibilities: order blocks, fair value gaps, premium and discount from a defined dealing range (supporting concepts held here); setup candidate with its rule trail.
+• Inputs: outputs of Brains 04, 06, 08; closed bars.
+• Outputs: setup candidates with reasons and rule IDs; zone list with status (candidate, mitigated, invalid).
+• Class: deterministic rules. Setup quality is a hypothesis until tested.
+• Dependencies: Brains 04, 06, 08.
+• Failure behaviour: any missing upstream output gives DATA INSUFFICIENT for the setup.
+• Testing: rule tests per concept; combination tests; out-of-sample evidence before any setup affects a decision.
+Brain 10: Session Intelligence
+• Purpose: report the trading session and its boundaries.
+• Responsibilities: Asian, London, New York windows; overlaps; broker time mapping; daylight-saving handling.
+• Inputs: broker server time; session definitions (to be fixed in the specification).
+• Outputs: current session, time to next boundary, overlap flag.
+• Class: deterministic.
+• Dependencies: EA time source; OS-1 for host clock.
+• Failure behaviour: unknown broker offset gives DATA INSUFFICIENT and blocks session-dependent entries.
+• Testing: boundary tests across daylight-saving changes; offset-change tests.
+Brain 11: Execution and Trade Quality Intelligence
+• Purpose: report execution conditions and a quality measure.
+• Responsibilities: spread, slippage, rejection, and latency statistics; a quality score marked advisory.
+• Inputs: broker quotes from the EA; execution records.
+• Outputs: spread values, slippage statistics, rejection counts, quality score with calibration status.
+• Class: statistical; advisory. The hard gate is EA-local only (BA-3).
+• Dependencies: EA execution records (Phase 3 for execution data).
+• Failure behaviour: insufficient execution data gives DATA INSUFFICIENT for the score; the EA-local spread and stop checks still apply.
+• Testing: statistic tests on fixed records; calibration tests before any use.
+Brain 12: Trade Management Intelligence
+• Purpose: propose stop management and exit actions.
+• Responsibilities: propose break-even, trailing stop, partial close, and management exits under approved parameters.
+• Inputs: position state from reconciliation; broker stop levels; Brain outputs; approved management parameters.
+• Outputs: proposals only, each as a class R action with a reason. Never an order.
+• Class: deterministic.
+• Decision authority: none. Proposals are executed only by the EA, within the class R rules in V4 section 6.
+• Dependencies: BA-1 (location), BA-2 (fallback), Phase 3 only.
+• Failure behaviour: Brain 12 unavailable means no management changes. Existing broker stops remain. This is the V4.1 rule. Never imply management is still working when it is not.
+• Communication: if the EA runs it (recommended, BA-1), management is local, and the backend only receives its state. If the backend runs it, proposals use the authenticated command channel.
+• Testing: rule tests on fixed position states; stop-direction tests (a stop must never widen risk); broker stop-distance tests once B4 is verified; failure-state tests.
+Decision Engine (supporting, not a Brain)
+Combines outputs into BUY candidate, SELL candidate, WAIT, or REJECT, with reasons. Depends on all twelve. Tested for every output state and for conflicting Brain outputs.
+6. MT5 Expert Advisor architecture
+Labels: this architecture is PROPOSED. Function names and MT5 properties are drawn from MQL5 documentation and must be verified in MetaEditor before reliance (NOT VERIFIED for every name listed). The EA is the core product and the only order sender.
+Phase boundary: Phase 1 contains reading, telemetry, and logging only. No trade function is present in Phase 1 code (section 3.4, prompt 5).
+6.1 Initialisation (OnInit)
+1.  Read input parameters from Config.mqh. Validate ranges. Refuse to start on invalid input and write the reason to the log.
+2.  Read the account trade mode. Record whether the account is netting or hedging (B3, NOT VERIFIED). Refuse to start if the mode is unrecognised.
+3.  Read the account mode, DEMO or LIVE, from the account properties. Refuse to start if the mode does not match the configured mode. LIVE is refused in every phase covered here.
+4.  Match the configured symbol to the broker symbol, including any suffix. Refuse if no exact match is found.
+5.  Read symbol specifications: digits, point, tick size, tick value, contract size, volume min, max, and step, stop level and freeze level (B4, NOT VERIFIED).
+6.  Load persisted state from the EA state file: risk totals, streak, pause expiry, last sequence, command IDs seen, request references.
+7.  Check the system clock against the time source. Mark the clock status.
+8.  Run startup reconciliation (6.8) before enabling anything.
+9.  Start the timer used for telemetry and command polling.
+6.2 Broker connection
+• The EA reads connection state each tick and on a timer.
+• Disconnect: the EA sets DISCONNECTED, sends nothing, and keeps existing broker stops in place.
+• Reconnect: the EA reconciles before any class N action is allowed.
+• Allowed external URLs for telemetry and command polling must be listed in the terminal's options. The list is documented in setup (B5, NOT VERIFIED).
+6.3 Market data
+• The EA reads closed bars only on M15, M5, and M1. The current forming bar is never used for a decision.
+• Each bar is stored with its open time, and the broker time offset is recorded.
+• Ticks are read only for spread and quote checks, not for signals.
+• Data freshness: if the latest closed bar is older than the timeframe allows, the EA marks the timeframe STALE.
+6.4 Strategy execution
+• Phase 1: none.
+• Phase 2: strategies run in the Strategy Tester and the research harness only. No broker order.
+• Phase 3: an approved strategy produces a candidate, which arrives as a class N command. The EA does not generate its own entries unless the Founder approves that design. This is a point to confirm (not yet decided).
+6.5 Risk and Safety Supervisor
+The Supervisor is the only gate for class N actions. It is described in V4 section 7 and the Founder Decisions document. Its checks, in order, are: state is RECONCILED; no pause, breach, suspension, or BACKEND LOST state; mode is DEMO and matches the account; single-position rule passes; per-trade risk, daily and weekly loss, and consecutive losses pass; session, volatility, news, and execution-quality gates pass; stop-loss is valid. Any failure refuses the order and logs the reason.
+Blocked until decided: the accounting base (CS-1 to CS-6, AR-1 to AR-6). Until then the Supervisor refuses all class N actions. This is a designed fail-closed state, not a trading strategy.
+6.6 Order execution
+• Each order request carries a request reference stored in the EA state file before the request is sent.
+• The EA sets a stop-loss with every order. An order with no valid stop is refused before sending.
+• The EA uses the terminal's standard trade functions. Results are read from the returned status and then confirmed from history, not accepted from the send result alone.
+• The EA sets a magic number on every request so that its positions can be identified.
+• Comment fields have length limits (NOT VERIFIED for the current build). Keep the request reference in the state file, and keep the comment short.
+• Timed-out or unclear results: the EA searches open orders, positions, and recent deals for the reference. It does not resend blindly.
+6.7 Stop-loss enforcement and position management
+• Enforcement: a position without a valid stop, opened by the EA, triggers the EC-3 check. Correction is attempted first, under the stop rules in V4 section 6 (a stop may only move in the protective direction, and must respect the broker minimum distance).
+• Mandatory local protections (always on): stop on every order; broker-held stops; local risk state; reconciliation; fail-closed on unknown state; clock-status refusal of class N.
+• Optional Brain 12 management (Phase 3 only, BA-1): break-even, trailing stop, partial close. If Brain 12 is unavailable or disabled, none of these runs. Existing stops stay as set.
+• Position management never acts on manual positions (EC-6).
+6.8 Broker history reconciliation
+• At startup and after any disconnect, the EA compares its state file with open positions, pending orders, and deal history for its magic number and request references.
+• Match: state becomes RECONCILED.
+• Any unmatched EA position or order, or any missing record, sets RECONCILE REQUIRED. Class N is blocked. Class R is allowed only for identified positions.
+• Manual changes detected in history are recorded as EXTERNAL MANUAL (EA-7, V4.1 section 2).
+• Reconciliation uses broker history only. The backend copy is not authoritative.
+6.9 Duplicate-order prevention
+• Request reference, stored before sending.
+• Command IDs seen are stored and checked; a repeated command returns its stored result.
+• Single-position rule checked from live terminal state immediately before sending (CS-7, CS-8, CS-9).
+6.10 Emergency closure
+Two paths, kept separate (Founder Decisions, EC section):
+• Owner-requested: a signed class R command from the backend, after owner authentication, recent re-authentication, and two-step confirmation. Available from Phase 3 only (EC-1, EC-2).
+• EA-detected critical fault: the EA closes its own identified position only when a fault on the approved trigger list persists for the approved check count (EC-3, EC-4). No backend decision is needed.
+• Both paths: close only identified EA positions; use broker-confirmed results; retry up to the approved count (EC-5); escalate to a critical alert and a class N block when the close is not confirmed.
+• Both paths: no opposite opening trade to offset; on netting accounts, a reducing order of the exact volume is used under EA-1.
+• Manual human closure in the terminal or mobile application is separate. It is always permitted, recorded as external, and reconciled.
+6.11 Telemetry
+• Message contents: instance ID, mode, sequence, sent and expiry times, field-level timestamps, heartbeat, account mode, symbol status, bar status, clock status, EA state, pause and risk totals (read-only copies).
+• Signed per section 9 of V4 (signing scheme OS-11, NOT VERIFIED).
+• Telemetry sends are retried with the same message ID. The backend accepts a repeat without a second write.
+• In Phase 1, telemetry is the only outbound channel.
+6.12 Error handling
+• Each error has a code, a severity, and an action.
+• Critical: state corruption, identity mismatch, clock failure with a position open, failed close. Action: block class N; raise alert; for EC-3 faults, follow the emergency path.
+• Warning: a single failed send, a stale bar, a telemetry failure. Action: log; retry within limits.
+• Logging: local log files with rotation (retention OS-5). Log entries are not secrets and never contain keys.
+6.13 Recovery after restart
+1.  Load state file. If unreadable or missing: fail closed, set RECONCILE REQUIRED, and do not infer state from memory.
+2.  Reconcile against broker history (6.8).
+3.  Re-check pause expiry against broker time.
+4.  Resume telemetry.
+5.  Resume class N only when all Supervisor checks pass.
+6.14 Mandatory local protections versus optional Brain 12 management
+Item
+Type
+Operational when backend is down
+Operational when Brain 12 is down
+Stop on every order
+Mandatory
+Yes
+Yes
+Broker-held stops
+Mandatory
+Yes
+Yes
+Local risk state and limits
+Mandatory once CS and AR approved
+Yes
+Yes
+Reconciliation
+Mandatory
+Yes
+Yes
+Fail-closed on unknown state
+Mandatory
+Yes
+Yes
+Clock-status refusal
+Mandatory
+Yes
+Yes
+Owner-requested close
+Optional path, Phase 3
+No, unless owner acts in terminal
+Yes, as it does not use Brain 12
+Automatic critical-fault close
+Mandatory once EC-3 approved
+Yes
+Yes
+Break-even, trailing, partial close
+Optional, Phase 3
+No
+No
+New entries
+Depends on candidates
+No candidates, so no entries
+Governed by entry Brains (BA-4)
+The EA must show each optional function as NOT AVAILABLE when its source is down. It must never display a management function as active when no proposals are arriving.
+7. Strategy research and validation
+Status: no strategy has a proven edge. No backtest has been run. All three candidates are unselected. The protocol below is APPROVED in principle as the research method described in V3 and V4, with the details below PROPOSED for approval. Selection criteria are UNRESOLVED until written and approved before any test.
+7.1 Candidates (specifications to be written and approved)
+• A. Trend-Aligned Pullback: M15 direction, pullback definition, M5 confirmation, M1 entry, invalidation, stop, target, regime suitability.
+• B. Breakout and Retest: defined breakout, closing confirmation, retest, failed-breakout rule, trigger, invalidation, stop, target. May depend on pending orders (CS-8).
+• C. Liquidity Sweep and Reversal: liquidity level from Brain 04, sweep definition, reclaim, structure and displacement confirmation, trigger, invalidation, stop, target.
+Each specification is a fixed written document in research/specs/, with a version. A specification cannot change after results are seen without a new version and a note of why.
+7.2 Specification template (every strategy)
+1.  Market and timeframes.
+2.  Each condition, with its exact rule and the Brains it uses.
+3.  Entry trigger and order type (market or pending).
+4.  Stop-loss rule and minimum distance handling.
+5.  Take-profit or exit rule.
+6.  Position size rule within the risk limit.
+7.  Filters: session, volatility, news window.
+8.  Invalidation and expiry rules.
+9.  Parameters, with ranges and the default used in the first test.
+10.  Known limits and the conditions in which the strategy should not trade.
+7.3 Data
+• Source for historical tests: MT5 Strategy Tester with recorded tick history from the broker (NOT VERIFIED for depth and quality).
+• Any external data is recorded separately with its source and licence.
+• Data quality checks before use: gaps, duplicated bars, spread outliers, weekend and holiday handling.
+• The data set, its date range, and its checksum are recorded in the test configuration.
+7.4 Cost model (same for all three candidates)
+• Spread: from recorded broker spread data, not a fixed assumption, where data exists.
+• Commission: from the Exness Standard schedule, verified at setup (NOT VERIFIED).
+• Swap: from the broker's specification (NOT VERIFIED).
+• Slippage: stated assumption, varied across a range in sensitivity tests.
+• Costs are reported separately so their effect on results is visible.
+7.5 Comparison protocol
+1.  Fix the date ranges and splits before running any test: in-sample, out-of-sample, and rolling walk-forward windows.
+2.  Include periods of trend, range, and high volatility. Report which periods are covered.
+3.  Run each candidate under the same data, costs, and risk limits.
+4.  Log every parameter set tried. The count is reported with results, because a large number of trials raises the chance of a false result.
+5.  Report for each candidate: net expectancy per trade with a confidence interval, profit factor, maximum drawdown and recovery, trade count, win and loss distribution, and sensitivity to each cost assumption.
+7.6 Out-of-sample and walk-forward validation
+• Out-of-sample: parameters chosen on in-sample data are tested once on out-of-sample data. Re-tuning after seeing out-of-sample results is recorded as a new trial.
+• Walk-forward: repeated optimisation on a window, tested on the next window, rolled forward. The stability of parameters across windows is reported.
+• A strategy whose results depend on one period or one parameter value is reported as inconclusive.
+7.7 Robustness and overfitting checks
+• Parameter neighbourhood: results should not collapse for small parameter changes.
+• Cost stress: results at higher spread and slippage.
+• Trade-count floor: a minimum trade count is set before testing. Below it, results are inconclusive.
+• Randomised or shuffled tests where the method allows, to check that results are not produced by noise.
+7.8 Demo testing
+• Demo forward evaluation is a Phase 3 activity, 8 to 12 weeks, on the broker DEMO account.
+• It runs only after Phase 2 approval and only through the full EA path.
+• Its results are reported separately from any backtest. Backtest and demo results are never merged.
+7.9 Selection criteria
+UNRESOLVED. The Founder must approve the criteria before any test begins. Recommended structure: a minimum trade count; a minimum out-of-sample expectancy with a positive lower bound on its confidence interval; drawdown within a limit set by the Founder; results stable across walk-forward windows; results that survive the cost stress. A candidate that meets all criteria may proceed to demo. A candidate that meets none is not selected. If no candidate meets the criteria, the outcome is recorded as no strategy selected.
+7.10 What the research can and cannot show
+• It can show whether a rule set produced a particular result on particular data under stated costs.
+• It cannot prove future profitability, live fills, or execution quality.
+• A selected candidate, if any, is still subject to demo testing and to a separate Founder decision.
+7.11 Records
+Each run writes: specification version, data set reference, cost model, parameters, trial count, metrics, and the selection outcome. Stored under research/results/ and copied into the Strategy Lab view with its source label.
+8. Complete security architecture
+Labels: security requirements from V4 and the Founder's instructions are APPROVED. Mechanisms are PROPOSED. Signing scheme (OS-11), timestamp tolerance (OS-7), and key rotation (OS-8) are UNRESOLVED. Platform behaviour is NOT VERIFIED where marked.
+8.1 Trust boundaries
+Boundary
+Trusted side
+Untrusted side
+Control
+Browser to Firebase
+Firebase services
+Browser code and any client
+Auth tokens; security rules; App Check (recommended)
+Browser to backend
+Backend
+Browser
+Verified ID token; owner check; no write in Phase 1
+EA to backend
+Backend
+EA host and its files
+Signed telemetry; sequence; replay store; field validation
+Backend to EA
+EA verification
+Command channel, network
+Signed commands; expiry; sequence; EA-side class checks
+TradingView to backend
+Backend
+Webhook sender
+Shared secret; readiness only; no trading use
+Backend to Firestore
+Service identity
+Everything else
+IAM least privilege
+EA to broker
+Broker transaction records
+Broker responses until confirmed
+Confirmation from history
+Rule: the EA trusts its own checks over any message. A valid signature does not override a failed local check.
+8.2 Authentication
+• Owner sign-in through Firebase Authentication, one method only (DB-6).
+• Multi-factor authentication for the owner account where the method supports it (NOT VERIFIED per method).
+• Backend verifies every ID token server-side and checks the UID against OWNER_UID from configuration.
+• Session inactivity limit set by DB-5.
+• Recent re-authentication for emergency close and any risk-relevant request (EC-1 window).
+8.3 Authorisation
+• Owner-only for all dashboard data and all requests.
+• Service identities: backend service identity for Firestore writes; no other principal has write access to trading paths.
+• EA identity: instance ID plus key ID, checked against the registered instance list.
+• Phase 1 authorisation: read-only. All command and settings endpoints refuse with a stated reason.
+8.4 API security
+• HTTPS only.
+• Input validation on every endpoint: schema, length, type, allowed values.
+• Rate limiting per identity and per endpoint (mechanism to be chosen; NOT VERIFIED for the chosen host).
+• Error responses do not reveal internal state, keys, or stack traces.
+• CORS limited to the dashboard origin.
+• Dependency scanning in CI for known vulnerabilities.
+8.5 Command signing and telemetry signing
+• Preferred: asymmetric signatures. The backend signs commands with a private key held in the secret manager. The EA holds only verification keys (OS-11, subject to B1, NOT VERIFIED).
+• Fallback: HMAC-SHA256 with a per-instance key. Limitation: a key present on the host can forge messages for that instance. Use only with a recorded risk acceptance.
+• Telemetry: EA-side signing key is per instance, stored in a restricted file on the host. Its compromise lets an attacker feed false telemetry. The EA's own checks and the Supervisor still limit damage.
+• Each message includes: key ID, instance ID, mode, sequence, issued time, expiry, nonce, payload hash, signature.
+• Verification order: key ID known and not revoked; signature valid; instance and mode match; not expired; time within tolerance; sequence greater than last applied; ID not seen before. Any failure is logged with the reason.
+8.6 Replay prevention
+• Backend: message IDs stored for at least the expiry window plus margin; repeats rejected.
+• EA: last sequence and command IDs stored in the state file; repeats return the stored result without re-execution.
+• Sequence reset is an owner procedure on the host only, logged (OS-9).
+8.7 Key management
+• Backend signing key: generated in the secret manager or a managed key service, never exported to the repository or to a developer machine where avoidable. Access limited to the backend service identity.
+• Rotation: new key ID added to the EA's accepted set on the host, then backend switches, then old key removed after an overlap window (OS-8, values UNRESOLVED).
+• Revocation: backend stops signing with the key; EA set updated by the owner on the host; backend suspension is immediate.
+• Telemetry keys: generated by the owner, stored on the host, registered at the backend. Revoked on compromise.
+• Key generation, storage, and rotation events are recorded in admin_audit without the key value.
+8.8 Secrets management
+• Secret manager: backend secrets, read at runtime.
+• Repository: no secrets, ever. .gitignore and a pre-commit scan are required. Pre-commit scanning tool to be chosen (NOT VERIFIED).
+• Developer machine: secrets kept in the operating system credential store or a password manager. Never in prompts, chat, or documents.
+• Trading host: EA keys in restricted-permission files. The account password is entered in the terminal by the owner and is not stored in any project file.
+• Rotation schedule: UNRESOLVED (OS-8).
+8.9 Audit logs
+• admin_audit: owner actions, authentication events, setting proposals, key events, suspension and emergency requests. Append-only by rule. Readable by owner only. No trading figures.
+• Trading records: decisions, order requests, executions, trades, risk events. Written only by the backend service identity. Mode-scoped.
+• EA local logs: rotated files, retention OS-5. Reconciled against broker history at review.
+• Log integrity: periodic export of logs to a separate restricted location (OS-5, OS-12).
+8.10 Firebase rules
+• Deny by default.
+• Owner read only on status and mode-scoped paths, by UID.
+• No browser writes to any trading path in Phase 1.
+• Mode segment must be demo or live.
+• No collection group queries.
+• Rule tests in the emulator: owner read allowed; non-owner read denied; any write denied; unknown mode denied; no unauthenticated access.
+8.11 Attack scenarios and controls
+Scenario
+Impact
+Controls
+Residual risk
+Stolen owner password
+Dashboard access
+MFA; owner UID check; re-auth for risk actions
+Read-only exposure in Phase 1
+Non-owner signs up and reads data
+Data exposure
+No public signup; rules; UID check
+Depends on auth settings (NOT VERIFIED)
+Replayed telemetry
+False status
+Message ID; sequence; expiry
+Low
+Forged telemetry from stolen EA key
+False status and candidate inputs
+Signature check; revocation; EA checks; Supervisor
+Medium: key on host
+Forged command from stolen EA key
+None, if EA verifies backend signatures
+Commands use backend key, not EA key
+Low if asymmetric
+Stolen backend signing key
+Forged commands
+Secret manager; access limits; rotation; EA key set update
+High if undetected
+Compromised trading host
+Orders, keys, state
+Keys restricted; EA limits; alerts; owner review
+High; P0 incident
+Compromised dashboard code
+Display change, request forgery
+Owner token check; no write in Phase 1; server checks
+Medium
+TradingView webhook spoofing
+Misleading readiness
+Shared secret; readiness only; no trading use
+Low for trading
+Clock manipulation on host
+Pause and expiry errors
+NTP status; broker time; refuse class N when unsynchronised
+Medium
+Secret committed to repository
+Credential exposure
+.gitignore; pre-commit scan; history review; rotate
+High if it happens
+Dependency vulnerability
+Varies
+Scanning in CI; pinned versions
+Medium
+No control in this table is claimed to be complete. Each is a planned control, tested in section 9.
+8.12 Security review
+Before DEMO: full review of rules, backend auth, signing, replay, secrets, and host hardening. Record in docs/AUDIT_LOG.md.
+9. Complete testing plan
+Labels: this plan is PROPOSED. No test in it has been run. Results are recorded only in docs/AUDIT_LOG.md, with command, output, date, and environment. A test that cannot be run is marked BLOCKED with its reason, never PASS.
+9.1 Unit tests
+• Where: backend/test, run by the Node test runner or equivalent (tool to choose; NOT VERIFIED).
+• Covers: env validation, owner check, token rejection, telemetry validation rules, signature verification (with fixed test vectors once the scheme is chosen), replay store, command expiry, Brain functions on fixed inputs, Decision Engine output states.
+• Pass criterion: every test passes; each rejection type has at least one test that fails when the check is removed.
+9.2 Integration tests
+• Where: tests/integration, with the Firebase emulators.
+• Covers: telemetry in to Firestore out; status endpoint reads; disabled endpoints refuse; full path from a signed test message through validation to stored record; duplicate message handling.
+• Pass criterion: each path produces the expected stored record or refusal, with no extra write.
+9.3 Security tests
+• Where: tests/security and the emulator rules suite.
+• Covers: unauthenticated request denied; non-owner denied; browser write denied for every trading path; unknown mode denied; forged signature rejected; expired message rejected; replayed message rejected; out-of-order sequence rejected; oversized payload rejected; malformed JSON rejected; secret scan finds no secret in the repository.
+• Pass criterion: every denial occurs with the stated reason.
+9.4 EA tests
+• Compile: MetaEditor compile with zero errors and recorded warnings (NOT VERIFIED until run).
+• Static: search for forbidden trade functions in Phase 1 code.
+• Terminal run: EA attached to a demo chart; reads specs and bars; sends telemetry to a test endpoint; logs written.
+• Strategy Tester: used in Phase 2 for research runs only.
+• Local state: restart test with a seeded state file; corrupt state file test; missing state file test (must fail closed).
+• Stop rules: unit-style tests in MQL5 scripts for stop-direction and minimum-distance checks.
+• Pass criterion: each test has a recorded output.
+9.5 Strategy tests
+• Reproducibility: the same configuration run twice gives the same results.
+• Data checks: gaps and duplicates detected on known bad data.
+• Cost sensitivity: results recomputed under stressed costs.
+• Split discipline: out-of-sample data not used for parameter choice; check by log.
+• Trial count recorded and reported.
+• Pass criterion: all checks recorded. Passing these checks does not mean a strategy is profitable.
+9.6 Failure simulations
+Simulation
+Method
+Expected behaviour
+Pass evidence
+VPS or internet loss
+Disconnect host network during demo run
+No new entries; broker stops held; reconnect triggers reconciliation
+Log, broker history
+Backend outage
+Stop backend service
+EA blocks entries after heartbeat limit; positions keep stops; no management changes
+EA log; dashboard shows NOT AVAILABLE
+Brain failure
+Force one Brain to return an error
+That Brain shows ERROR; Engine returns DATA INSUFFICIENT for affected candidates; no guess
+Brain output record
+Brain 12 down
+Disable Brain 12 proposals
+No management changes; mandatory protections unchanged
+EA log; position stops unchanged
+Broker disconnection
+Disable terminal connection in demo
+DISCONNECTED state; no sends; reconcile on return
+EA log
+Restart mid-position
+Restart terminal with an open demo position
+Reconciliation; pause and risk state restored; no duplicate order
+Broker history; state file
+Corrupt state file
+Alter state file
+Fail closed; RECONCILE REQUIRED
+EA log
+Clock out of sync
+Set host clock offset
+Class N refused; alert raised
+EA log
+Timed-out order
+Simulate timeout in test harness where feasible
+Reference search before any resend
+Log; history
+Telemetry replay
+Resend captured message
+Rejected
+Backend log
+Each simulation runs on DEMO or a test endpoint only.
+9.7 Emergency-close verification
+• Owner path (Phase 3): authentication required; re-auth required; two-step confirmation; cancel before EA acknowledgement; EA closes only identified positions; broker history confirms close; failure path escalates.
+• Automatic path (Phase 3): each approved trigger tested with a seeded condition on DEMO; persistence count tested; manual positions not touched; retry count tested with broker rejection (B8, NOT VERIFIED until run).
+• Pass criterion: every step recorded with broker transaction references.
+9.8 Brain tests
+Per Brain, as defined in section 5.0. A Brain marked IMPLEMENTED without its full test set is a defect.
+9.9 Regression
+The full unit, integration, and security suites run on every change. Failures block merge.
+9.10 Test evidence format
+Each run records: date, commit hash, command, environment (OS, Node, emulator, MT5 build), full output, pass or fail count, and any BLOCKED items with reasons.
+10. Complete development phases
+Labels: the three phases and their boundaries are APPROVED as stated in the Founder's requirements. Feature lists, files, and acceptance criteria are PROPOSED. No phase has been approved to start. Phase 1 approval has not been requested.
+Phase 1: Foundation, read-only and monitoring-only
+Objectives
+• Establish the repository, configuration, and documentation baseline.
+• Establish owner authentication and the read-only backend.
+• Establish signed read-only telemetry from the EA, and its verification.
+• Establish the read-only dashboard.
+• Establish DEMO and LIVE data separation in the data model.
+• Establish the repository audit, once access is provided (OS-6).
+Features
+• Repository skeleton, docs, .gitignore, .env.example.
+• Firebase project, Authentication, Firestore in production mode, rules, emulator tests.
+• Backend: config, owner auth, status endpoint, disabled endpoints, telemetry receiver with replay and signature checks, heartbeat monitoring.
+• Dashboard: all views, read-only, with mode and freshness labels.
+• EA: initialisation, broker specification reading, closed-bar reading, telemetry, local logs. No trade function.
+• TradingView readiness script, optional, subject to OS-3.
+Files created: as listed in section 2 for the Phase 1 items marked mandatory, plus docs/AUDIT_LOG.md entries.
+Dependencies
+• DECISIONS.md with the Phase 1 items resolved: OS-1, OS-2, OS-3, OS-4, DB-1, DB-2, DB-5, DB-6, OS-5, OS-7 to OS-12, EA-5, EA-7.
+• Verifications B1, B2, B4, B5 performed and recorded before EA telemetry is accepted. Each is NOT VERIFIED until run.
+Tests
+• Unit, integration, security, and rules tests from section 9 for the Phase 1 scope.
+• EA compile and terminal run.
+• Failure simulations for network loss and backend outage, reading only.
+Acceptance criteria
+• Owner can sign in; non-owner cannot read anything.
+• Every browser write to trading data is denied.
+• Telemetry with bad signature, replay, expiry, future time, invalid price, or mode mismatch is rejected and logged.
+• Dashboard renders every state, including NOT VERIFIED and STALE, with no fabricated value.
+• EA compiles and reads specifications and bars in a terminal with recorded output.
+• No trade function is referenced in any Phase 1 file.
+• Repository audit completed with every relevant file read.
+Exit gate: audit record complete, no open P0 or P1, Founder approval given in writing.
+What remains disabled
+• All class N actions.
+• All class R actions, including owner-requested emergency close and any stop change.
+• All class A settings changes. Settings screens show current values only, read-only (V4.1 section 6).
+• Command endpoint and command polling in the EA.
+• Strategy activation, candidate generation for execution, and Brain enablement for decisions.
+• Any broker order, position change, or deal.
+• Alert acknowledgement may be enabled only if DB-2 is approved.
+Phase 2: Intelligence and research, no broker orders
+Objectives
+• Specify, implement, and test the twelve Brains.
+• Implement the Decision Engine and the Supervisor logic.
+• Specify and test the three strategy candidates.
+• Run research to determine whether any candidate meets the approved criteria.
+Features
+• Brain specifications approved one at a time, then implementation in the order of section 3.3.
+• Decision Engine producing BUY candidate, SELL candidate, WAIT, or REJECT, with reasons, stored only as records.
+• Supervisor logic in the EA, tested but not connected to any order send.
+• Accounting policy implementation, once CS and AR are approved.
+• Research harness and reports in research/.
+• Non-trading settings preferences, if DB-3 allows them in Phase 2.
+Files created: backend Brain and engine modules, EA RiskState and Supervisor include files, research configs and results, Strategy Lab view.
+Dependencies
+• Founder approvals: CS-1 to CS-9, AR-1 to AR-6, BA-1, BA-3, BA-4, BA-5, BA-6, EA-1, EA-2, EA-3, EA-4, EA-6, CS-8 decision, selection criteria (section 7.9).
+• Research data sets with recorded checksums.
+Tests
+• Brain test sets per section 5.0 and 9.8.
+• Decision Engine state tests.
+• Supervisor refusal tests for every check.
+• Strategy research tests per section 9.5.
+Acceptance criteria
+• Each Brain has a specification, tests passing with recorded output, and status shown correctly.
+• No Brain marked implemented without its tests.
+• Decision Engine tested for all four outputs and conflicting inputs.
+• Supervisor refuses every class N action when any check fails, including missing accounting policy.
+• Each candidate has a complete research record with trial count and costs.
+• No result is labelled as an edge. Outcomes are one of: candidate meets criteria; candidate inconclusive; no candidate selected.
+Exit gate: audit complete, Founder approval given in writing. A selected candidate, if any, is not yet authorised for demo.
+What remains disabled
+• Any broker order, including DEMO.
+• Any class N or class R command to the EA.
+• Owner-requested and automatic emergency close in the EA.
+• LIVE trading, in every form.
+Phase 3: DEMO execution
+Objectives
+• Automatic execution by the EA on the DEMO account, under the Supervisor.
+• Position management, reconciliation, restart recovery, failure handling, and emergency closure.
+• 8 to 12 weeks of DEMO forward evaluation.
+Features
+• Command channel from backend to EA, with signing, expiry, sequence, and acknowledgement.
+• Order path: candidate to EA, approval chain, order, confirmation from history.
+• Position management: Brain 12 deterministic rules in the EA (BA-1, if approved), mandatory local protections.
+• Owner-requested emergency close with authentication and two-step confirmation (EC-1, EC-2).
+• Automatic critical-fault close (EC-3 to EC-6).
+• Soft suspend from the dashboard (DB-4).
+• Reconciliation and restart recovery as in section 6.
+• Forward evaluation records.
+Files created: command modules, Commands.mqh, Brain12Mgmt.mqh, emergency modules, deployment definitions, alert rules.
+Dependencies
+• All Phase 2 gates passed.
+• Founder approval of EC-1 to EC-6, DB-4, OS-10, EA-3, B3, B4, B8 results.
+• Phase 3 specific: key rotation and revocation procedures tested (OS-8, OS-9).
+Tests
+• Section 9.4 terminal runs with demo positions.
+• Section 9.6 failure simulations, all rows.
+• Section 9.7 emergency close verification.
+• Forward evaluation at 8 to 12 weeks, recorded separately from backtests.
+Acceptance criteria
+• Every order confirmed by broker history, with the transaction reference recorded.
+• Reconciliation matches broker history for the full test period.
+• Every failure simulation shows the expected fail-closed behaviour.
+• Emergency close verified on DEMO, including broker rejection and retry.
+• No duplicate position in any simulated timeout.
+• Forward results reported with sample size and costs.
+Exit gate: Phase 3 audit and Founder approval in writing. Passing Phase 3 does not authorise LIVE trading.
+What remains disabled
+• LIVE trading, in every form.
+• Any settings change that raises risk remotely (EA-3).
+• Any automatic action outside the approved trigger list.
+LIVE
+Not a phase. Requires a separate Founder decision after the Phase 3 audit. No LIVE configuration, account, or code path is authorised by this blueprint.
+11. Deployment and production readiness
+Labels: the sequence below is PROPOSED. No deployment has occurred. LIVE trading is NOT approved. Nothing in this section authorises LIVE.
+11.1 Environments
+• Local development: the Founder's machine, with the emulator. No real account or real key.
+• Test: a separate Firebase project or emulator-only environment, if the Founder approves a second project. UNRESOLVED.
+• DEMO: the production Firebase project, the backend, the dashboard, and the trading host connected to the broker DEMO account.
+• LIVE: not defined. Not authorised.
+11.2 Change control
+• Every change is a commit with a message naming the stage and the decision IDs it relies on.
+• Each deployment is run by the Founder from a tagged commit.
+• Each deployment records: commit hash, command run, output, time, and the person responsible.
+• Rollback: redeploy the previous tagged commit. Rules and backend rollback steps are written before the first DEMO deployment.
+11.3 Trading host setup (MANUAL with checklist)
+1.  Provision the host (OS-1). Record the provider, region, and specification.
+2.  Install the terminal, MetaEditor, and the broker's DEMO account. Enter the password in the terminal only.
+3.  Configure time synchronisation. Record the status.
+4.  Set restricted permissions on the EA's key and state directories.
+5.  Add the allowed URLs for telemetry and commands to the terminal options (B5, NOT VERIFIED).
+6.  Install the EA from a tagged commit. Compile in MetaEditor and record the output.
+7.  Load the DEMO parameter set (ea/config/parameters.set), owner-approved.
+8.  Confirm the account mode reads DEMO and the instance is registered.
+9.  Record the host configuration in docs/AUDIT_LOG.md, without any secret.
+11.4 Backend and dashboard deployment (MANUAL run)
+1.  Rules and indexes deployed after emulator tests pass.
+2.  Backend deployed to the chosen runtime, with secrets set in the secret manager, not in the command.
+3.  Dashboard built and hosted with its public configuration.
+4.  Post-deploy checks: non-owner denied; unauthenticated denied; status endpoint returns expected shape; disabled endpoints refuse.
+11.5 Monitoring
+• Heartbeat: alert when EA telemetry is missing beyond EA-5.
+• Security: alert on rejected-signature spikes and authentication failures.
+• Health: backend error rate, Firestore write failures, clock status reports.
+• Trading: alert on any EA state of RECONCILE REQUIRED, CLOSE NOT CONFIRMED, or BACKEND LOST.
+• Delivery: owner notified by email at minimum. Additional channels optional.
+• Thresholds: UNRESOLVED until values are set.
+11.6 Reliability validation before DEMO execution
+• Soak test: the telemetry path runs continuously for a set period, with recorded uptime and failure counts.
+• Restart test on the host, repeated.
+• Network loss test, repeated.
+• Backend outage test, repeated.
+• Results recorded. A failed run is fixed and re-run before continuing.
+11.7 DEMO execution
+• Starts only after Phase 2 and Phase 3 gates pass, and the Founder approves DEMO start in writing.
+• The first DEMO period uses the minimum position size allowed by the broker and the risk policy.
+• The owner reviews the dashboard and logs daily during the early period. Review frequency after that is set by the Founder.
+• Any RECONCILE REQUIRED, CLOSE NOT CONFIRMED, or unexpected behaviour stops the DEMO run until reviewed.
+11.8 Forward evaluation
+• 8 to 12 weeks, as stated in the approved phases.
+• Records: each trade with its broker reference, each risk event, each failure, each manual action, each reconciliation result.
+• Results reported with sample size, costs, and the research findings they are compared against.
+11.9 Incident response
+• Runbook written before DEMO, covering: suspend, emergency close (owner path), key revocation, backend suspension, host isolation, and restore from backup.
+• Each incident recorded in docs/AUDIT_LOG.md with cause, impact, and fix.
+11.10 Backup and restore
+• Firestore exports scheduled (4.10). Restore tested once before DEMO.
+• EA state files copied off the host on a schedule (OS-9). Restore tested once before DEMO.
+11.11 Production readiness review
+A readiness review is held only after Phase 3 audit and forward evaluation are complete. It records the open risks, the failure results, and the unresolved items, and it gives the Founder a recommendation. The recommendation is not a decision.
+11.12 LIVE readiness
+• LIVE is not authorised by this blueprint.
+• A separate Founder decision is required after the Phase 3 audit and the readiness review.
+• Any LIVE step would need its own approved configuration, account, risk policy, monitoring, and runbook.
+• Until that decision, no LIVE account is connected, no LIVE mode is allowed by the EA, and no LIVE data is displayed as real performance.
+12. Final master checklist
+Use this checklist in order. Each item has a status: APPROVED, PROPOSED, UNRESOLVED, or NOT VERIFIED. Tick an item only when its evidence is recorded in docs/AUDIT_LOG.md. Nothing is ticked today.
+12.A Founder decisions (before any stage that depends on them)
+[ ] CS-1 to CS-9 decided and recorded (UNRESOLVED)
+[ ] AR-1 to AR-6 decided and recorded (UNRESOLVED)
+[ ] EA-1 to EA-7 decided and recorded (UNRESOLVED)
+[ ] BA-1 to BA-6 decided and recorded (UNRESOLVED)
+[ ] EC-1 to EC-6 decided and recorded (UNRESOLVED)
+[ ] DB-1 to DB-6 decided and recorded (UNRESOLVED)
+[ ] OS-1 to OS-12 decided and recorded (UNRESOLVED)
+[ ] Strategy selection criteria approved before any test (UNRESOLVED)
+[ ] Phase 1 approval in writing (not requested)
+12.B Verifications (technical, NOT VERIFIED until run and recorded)
+[ ] B1 asymmetric signature verification in MQL5
+[ ] B2 HMAC-SHA256 in MQL5, if fallback
+[ ] B3 netting or hedging on the Exness Standard account
+[ ] B4 minimum stop distance and freeze level, read at runtime
+[ ] B5 WebRequest with allowed URLs and TLS
+[ ] B6 Strategy Tester tick history depth and quality
+[ ] B7 TradingView webhook permitted under plan and terms
+[ ] B8 emergency close under broker rejection, on DEMO
+12.C Repository and tools
+[ ] Repository access provided, or scope declared (OS-6)
+[ ] Repository created, private, with README and .gitignore
+[ ] .env.example contains names only
+[ ] Pre-commit secret scan in place
+[ ] Local tools installed and versions recorded
+[ ] MetaEditor and MT5 installed on the trading host
+12.D Firebase
+[ ] Project created; ID recorded (manual)
+[ ] Billing decision made and budget alert set, if a paid service is used (manual)
+[ ] Authentication: one sign-in method; owner UID recorded in config (manual)
+[ ] Owner MFA enabled, where supported (manual, NOT VERIFIED)
+[ ] Firestore in production mode, region recorded (manual)
+[ ] Rules written and reviewed
+[ ] Rules emulator tests pass, with output recorded
+[ ] Indexes file generated only where needed
+[ ] Secret manager entries created by the Founder, never in the repository
+[ ] App Check configured, if approved
+[ ] Backup export scheduled and restore tested before DEMO
+[ ] Alert policies created with thresholds set
+12.E Backend
+[ ] Config validation fails on missing values
+[ ] Owner token verification, with unit tests
+[ ] Status endpoint, read-only
+[ ] Disabled endpoints refuse with reasons
+[ ] Telemetry receiver with each rejection test
+[ ] Replay store tested
+[ ] Command queue, signing, expiry, and acknowledgement (Phase 3)
+[ ] Decision Engine (Phase 2)
+[ ] Audit writes for owner and key actions
+[ ] Heartbeat monitor
+12.F Dashboard
+[ ] All views present, read-only in Phase 1
+[ ] Mode and freshness labels on every trading value
+[ ] Brain views show NOT IMPLEMENTED until tested
+[ ] No write control in Phase 1 (except DB-2, if approved)
+[ ] Phone and desktop layouts checked, screenshots recorded
+[ ] No sample value that looks like live data
+12.G EA
+[ ] Compiles in MetaEditor with recorded output
+[ ] No trade function in Phase 1 (static check recorded)
+[ ] Account mode and symbol checks at start
+[ ] Closed-bar reading only
+[ ] Telemetry signed and accepted by backend
+[ ] Local state file, with fail-closed on corruption
+[ ] Reconciliation at start and after disconnect (Phase 2 for order logic)
+[ ] Supervisor refusal tests (Phase 2)
+[ ] Order path on DEMO with confirmation from history (Phase 3)
+[ ] Stop-loss on every order, enforced (Phase 3)
+[ ] Position management, Brain 12 optional, if approved (Phase 3)
+[ ] Owner and automatic emergency close, with tests (Phase 3)
+12.H Brains and engines
+[ ] Each Brain specification approved, one at a time
+[ ] Each Brain implemented with its tests recorded
+[ ] Decision Engine tests for all outputs
+[ ] Status shown as NOT IMPLEMENTED until tested
+12.I Strategy research
+[ ] Specifications for A, B, C written and approved
+[ ] Data sets recorded with checksums
+[ ] Cost model recorded
+[ ] Splits fixed before testing
+[ ] Trial counts logged
+[ ] Results reported with sample size and costs
+[ ] Selection outcome recorded: meets criteria, inconclusive, or none selected
+12.J Security
+[ ] Trust boundaries reviewed
+[ ] Signing scheme decided and verified (OS-11, B1, B2)
+[ ] Replay and sequence tests pass
+[ ] Key rotation and revocation tested
+[ ] Secret scan clean
+[ ] Host permissions restricted
+[ ] Attack scenarios reviewed with residual risks recorded
+12.K Testing
+[ ] Unit, integration, security, and rules suites pass, with recorded output
+[ ] EA compile and terminal runs recorded
+[ ] Failure simulations: VPS and internet loss, backend outage, Brain failure, Brain 12 down, broker disconnect, restart, corrupt state, clock out of sync
+[ ] Emergency close verified, both paths (Phase 3)
+12.L Operations
+[ ] Host provisioned and recorded (OS-1)
+[ ] Backend region recorded (OS-2)
+[ ] TradingView route decided (OS-3, B7)
+[ ] Exness symbol name recorded (OS-4)
+[ ] Retention set (OS-5)
+[ ] Runbook written before DEMO
+[ ] Backups and restores tested
+[ ] Monitoring thresholds set
+12.M Phase gates
+[ ] Phase 1 audit complete; no open P0 or P1; Founder approval in writing
+[ ] Phase 2 audit complete; Founder approval in writing
+[ ] DEMO start approved in writing by the Founder
+[ ] Phase 3 audit complete; Founder approval in writing
+[ ] Forward evaluation of 8 to 12 weeks complete and reported
+[ ] Production readiness review held
+12.N LIVE
+[ ] Separate Founder decision recorded (not made; not requested)
+This checklist does not authorise any step. Each item requires its own approval and evidence.

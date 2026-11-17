@@ -1,0 +1,563 @@
+AEGIS XAU Revised Master Project Blueprint (Private Personal Website Scope)
+Nov 18, 2026 · @Ran Masrangi
+Document control and status
+This is a proposed revision for Founder review. Nothing in it is built, tested, or approved for implementation.
+• Version: Revised Blueprint, private personal website scope.
+• Replaces: the earlier master blueprint, which assumed a possible commercial platform.
+• Current stage: architecture and requirements. No code, Firebase resources, or MT5 changes exist yet.
+• Next gate: Founder review of this document, then a decision on the architecture and the open items in the Unresolved Founder decisions section.
+• Development rule: BUILD, TEST, AUDIT, FIX, RE-TEST, RE-AUDIT, PASS, FOUNDER APPROVAL, NEXT PHASE.
+Scope and purpose
+AEGIS XAU is a private personal website and monitoring dashboard for one owner. It shows the state of a personal XAUUSD trading system, and it lets the owner review and change that system's settings safely.
+In scope:
+1.  Monitoring the twelve Intelligence Brains, supporting engines, and market analysis.
+2.  Monitoring TradingView data readiness and the MT5 EA and Exness connection.
+3.  Monitoring Risk and Safety controls and the Central Decision Engine.
+4.  Viewing strategy research, backtests, and demo forward results.
+5.  Viewing verified demo trade history, logs, alerts, errors, and audit records.
+6.  Managing personal system settings with validation and audit logging.
+Out of scope, and not to be added unless the Founder explicitly requests it: public signup, customer accounts, subscriptions, payments, licensing, sales pages, signal sales, EA distribution, multi-tenant features, or any public-facing content.
+The website is a control and visibility surface. It does not replace the EA's safety controls, and it does not decide trades.
+Confirmed requirements
+These come from the Founder's messages and the original blueprint. They are not yet implemented.
+Area
+Confirmed requirement
+Owner
+Private, owner-only access. No public signup or customer accounts.
+Product
+Personal website and dashboard, not a commercial product.
+Instrument
+XAUUSD
+Platform
+MetaTrader 5, MQL5 for the EA
+Broker
+Exness, Standard account type
+Timeframes
+M15 direction, M5 confirmation, M1 entry. These are strategy timeframes, not permission to trade in Phase 1.
+Testing account
+Demo first
+Risk per trade
+0.50%
+Daily loss limit
+2%
+Weekly loss limit
+5%
+Consecutive losses
+Pause 180 minutes after three consecutive losses
+Open positions
+Maximum 1
+Prohibited methods
+No martingale, no grid, no averaging up or down
+Safety authority
+Independent Risk and Safety Supervisor with veto power inside the EA
+Execution
+Only verified broker transaction results count as execution
+Data separation
+DEMO and LIVE data are strictly separated everywhere
+Phase process
+Three phases, each gated by audit and Founder approval
+Intelligence
+Twelve specialist Brains, plus supporting engines
+Live trading
+Requires a separate Founder decision after the full Phase 3 audit
+Architecture overview
+The owner dashboard reads and manages the system through Firebase. The backend coordinates the twelve Brains and produces candidate signals. The MT5 EA receives candidates and applies the Risk and Safety Supervisor before any order is sent.
+The arrows show the intended data direction. Telemetry from the EA is authenticated and checked before the backend or dashboard may use it. The EA may refuse any candidate, including one that every Brain supports.
+Component responsibilities
+Component
+Owns
+Must not do
+Owner dashboard
+Display, owner-only settings requests, alert acknowledgement
+Place orders, read unverified data as live, store secrets
+Firebase Auth
+Owner login and session identity
+Grant access by email alone or allow public signup
+Firestore
+Structured records: status, decisions, logs, verified trades, settings
+Serve as proof of MT5 connection by itself
+Backend coordinator
+Brain orchestration, data validation, candidate generation, decision records
+Send orders, override EA safety, change risk limits
+TradingView foundation
+Symbol and timeframe readiness, confirmed candle state
+Generate trade signals in Phase 1
+MT5 Expert Advisor
+Broker integration, account mode, final validation, Risk Supervisor, execution, reconciliation
+Trust backend or dashboard values without validation
+Risk and Safety Supervisor
+Independent veto over every candidate and every order
+Be bypassed by any other component
+Exness MT5 server
+Broker execution and transaction results
+Be treated as proof of execution until verified by the EA
+The EA is the only component that may send orders to the broker.
+Data flow design
+Every data value carries its source, timestamp, timezone, instrument, timeframe, type, validation result, freshness limit, and mode (LIVE, DEMO, HISTORICAL, SAMPLE, or UNVERIFIED).
+1.  Market data: the MT5 EA reads symbol specifications, account mode, and closed-candle data from the terminal. TradingView supplies readiness state for its own timeframes.
+2.  Telemetry: the EA sends signed, timestamped messages to the backend. The backend rejects messages that fail authentication, freshness, schema, or ownership checks.
+3.  Intelligence: the backend validates inputs, runs the twelve Brains and supporting engines, and produces decision records with BUY CANDIDATE, SELL CANDIDATE, WAIT, REJECT, DATA INSUFFICIENT, or RISK BLOCKED states.
+4.  Candidate delivery: candidates go to the EA as requests. They are not orders.
+5.  Final validation: the EA runs its own checks, including the Risk and Safety Supervisor. It may refuse any candidate.
+6.  Execution: only the EA sends orders. It records the broker's transaction result and reconciles position state.
+7.  Persistence: the backend writes verified records to Firestore, keyed by mode.
+8.  Presentation: the dashboard reads Firestore and shows each field with its own freshness status.
+Fail-closed rule: if source, authentication, or provenance of any field is uncertain, the field shows as NOT VERIFIED and no trade may depend on it.
+Database structure
+Firestore stores structured collections. No single document holds the whole system. Proposed top-level collections, all scoped by mode where the data is trading-related:
+Collection
+Contents
+Mode scoped
+system_config
+Owner settings, versioned, with validation status
+Yes
+connection_status
+EA heartbeat and connection state per field, with freshness
+Yes
+market_data_meta
+Symbol specs, timeframe readiness, last closed candle per timeframe
+Yes
+brain_outputs
+One record per Brain per evaluation, including status and errors
+Yes
+decision_records
+Central Decision Engine decisions and reasons
+Yes
+risk_decisions
+Supervisor approvals, rejections, and the rule that triggered each
+Yes
+order_requests
+Requests the EA sent, with request IDs
+Yes
+execution_records
+Broker transaction results as confirmed by the EA
+Yes
+trades_verified
+Closed trades reconciled against broker history
+Yes
+strategy_runs
+Backtest, out-of-sample, walk-forward, and forward results, each labelled by source
+Yes
+alerts
+Alert events with state and acknowledgement
+Yes
+logs
+System, backend, and EA events
+Partly
+audit_trail
+Owner actions, setting changes, authentication events
+No
+system_health
+Component health snapshots
+Yes
+Every record carries mode, source, timestamp, schema version, and writer identity. Writes from the browser are limited to owner settings requests, and those are validated by the backend before they take effect.
+Open decision: retention periods for logs and raw telemetry.
+Security model
+A private website is not secure by default. Every layer below must be built and tested.
+Owner authentication
+• Firebase Authentication with one owner identity. No public signup, anonymous access, or provider that accepts arbitrary accounts.
+• Multi-factor authentication on the owner account.
+• Owner identity checked server-side on every privileged request, not only in the browser.
+Firestore rules
+• Deny by default. Every collection needs an explicit rule.
+• Rules check owner identity, data types, required fields, and mode field.
+• The browser cannot write trade, decision, log, or telemetry records. It may write only validated settings requests.
+• Rules tested in the Firebase Emulator for read, write, update, and delete.
+Backend authorization and IAM
+• Admin SDK bypasses client rules. Backend operations are protected by service-account IAM with least privilege, and by backend checks on each request.
+• No service-account key files in the repository or the browser.
+Authenticated telemetry
+• EA messages carry a per-message signature or HMAC, a nonce, and a timestamp.
+• Timestamps outside an approved tolerance are rejected. Replayed nonces are rejected.
+• Each telemetry field has its own freshness limit.
+• A Firestore record alone never proves the EA is connected.
+Secrets
+• Secrets live in environment or secret storage, never in code, the dashboard bundle, or logs.
+• Owner chat and documents must not receive passwords, tokens, service-account JSON, or broker credentials.
+Settings safety
+• Safety-critical settings (risk limits, mode, symbol) are validated, versioned, logged, and applied by the EA only after its own checks.
+Rate limiting, input validation, and dependency scanning apply to every backend endpoint.
+Dashboard specification
+The dashboard is the primary interface. It is owner-only, responsive, and built to work on a phone and on a desktop. Every panel shows its data mode (LIVE, DEMO, HISTORICAL, SAMPLE, UNVERIFIED, or NOT VERIFIED) and the freshness of each field.
+#
+Section
+Shows
+Key rule
+1
+Main Overview
+Overall status, mode, EA and TradingView state, risk state, active alerts, last update per source
+Any stale or unverified source turns the overview amber or red
+2
+12 Brains Monitor
+Each Brain's status, last update, data availability, output, errors, and explanation
+Shows NOT IMPLEMENTED until the Brain exists and is tested; no placeholder output
+3
+Bank and Institutional Intelligence
+Brains 01 to 06: macro calendar, cross-market state, regime, institutional-behaviour inference, order flow data source, liquidity levels
+Inferences are labelled as inferences
+4
+Smart Money Concepts Intelligence
+Brains 07 to 12: structure, sweeps, displacement, order blocks, FVGs, premium and discount
+Each zone shows its definition version and status (candidate, mitigated, invalid)
+5
+Market Analysis
+XAUUSD price context, session, volatility, regime, M15 direction, M5 confirmation, M1 readiness
+Market data age shown per timeframe
+6
+TradingView Monitor
+Symbol match, timeframe readiness, history counts, last confirmed close, READY, WAITING, or ERROR
+No trade signals in Phase 1
+7
+MT5 and Exness Connection Monitor
+EA heartbeat, broker name, account mode from the EA, symbol and suffix, specs, permissions
+Account mode comes only from the EA's own account properties
+8
+Central Decision Engine Monitor
+Current state (candidate, WAIT, REJECT, DATA INSUFFICIENT, RISK BLOCKED), agreement between Brains, reasons
+A candidate is not an order
+9
+Risk and Safety Supervisor
+Per-trade risk, daily and weekly loss, drawdown, consecutive losses, open positions, pause timer, last veto reasons
+Read-only here; limits change only through validated settings
+10
+Strategy Research and Testing Lab
+Strategy specifications, backtests, out-of-sample and walk-forward results, forward results, comparison
+Each result shows data source, date range, cost assumptions
+11
+Demo Trading Monitor
+Open demo positions, pending requests, execution results, slippage, rejections
+Demo only; no LIVE figures shown here
+12
+Trade History and Analytics
+Verified closed trades, win rate, net result, profit factor, drawdown, average win and loss
+Only reconciled trades; sample size shown beside every ratio
+13
+System Health and Diagnostics
+Component health, latency, heartbeat age, backend errors, Firestore status
+Each component states its last check time
+14
+Alerts and Notifications
+Active and past alerts, acknowledgement, transition-based events
+Alerts fire on state change, not on every update
+15
+Logs and Audit Trail
+Filterable system events, decisions, risk rejections, EA transactions, owner actions
+Audit entries cannot be edited from the dashboard
+16
+Personal Settings
+Symbol, timeframes, risk limits, freshness limits, notifications, mode
+Safety-critical changes need confirmation, validation, and an audit entry
+Design requirements
+• Premium, calm visual design with a clear hierarchy. Status colour is never the only signal.
+• Mobile layout prioritises section 1, alerts, and risk. Desktop shows several panels at once.
+• Accessibility: keyboard navigation, readable contrast, and text labels for every status.
+• No fake data. Empty, unavailable, and error states are designed and shown.
+• Owner session expires after an inactivity limit (value to be set by the Founder).
+Twelve Intelligence Brains
+All twelve Brains are proposed, not operational. Each needs a written specification, input and output schema, deterministic logic or a documented model, freshness rules, confidence method, failure behaviour, tests, and stated limitations before it can be marked as implemented.
+Brain
+Family
+Responsibility
+Main inputs
+Main limitation
+01 Macro and Fundamental
+Bank
+Rate, inflation, employment, and central-bank event context
+Timestamped economic calendar and verified releases
+Never invent news; headlines are not signals
+02 Cross-Market
+Bank
+DXY, yields, and correlated markets
+Reliable external series where licensed
+Correlation is not causation
+03 Market Regime
+Bank
+Trend, range, high or low volatility, transition
+Closed candles, ATR, ADX
+Regime labels can lag
+04 Institutional Behaviour
+Bank
+Accumulation or distribution inferred from price
+Price and volume where valid
+Cannot see bank orders or intent
+05 Order Flow
+Bank
+Available pressure and imbalance evidence
+Broker tick volume
+Tick volume is not global institutional volume
+06 Liquidity Mapping
+Bank
+Equal highs and lows, session, day, and week levels
+Closed candles, session times
+A level detected is not a prediction it will be taken
+07 Market Structure
+SMC
+Swings, BOS, CHOCH, MSS
+Closed candles, fixed swing rule
+Definitions must be objective and tested
+08 Liquidity Sweep
+SMC
+Sweep with wick and close rules, reclaim
+Brain 06 levels, candles
+Not every wick beyond a high is a stop hunt
+09 Displacement and Momentum
+SMC
+Strong directional moves and confirmation
+Candle body and range rules
+Exhaustion is hard to detect reliably
+10 Order Block
+SMC
+Candidate zones, validation, mitigation, invalidation
+Brains 07 and 09
+Not every opposite candle is valid
+11 Fair Value Gap
+SMC
+Three-candle defined imbalances and mitigation
+Three-candle rule
+Not every gap is tradable
+12 Premium, Discount, Dealing Range
+SMC
+Valid dealing range, equilibrium, location
+Brain 07 structure
+Needs a structural range rule, not arbitrary swings
+Dependencies: Brains 07 to 12 depend on structure outputs. Brain 08 depends on Brain 06. Brain 10 depends on 07 and 09. No Brain may create an order or change risk settings.
+Confidence values are shown only after calibration on out-of-sample data. Until then the dashboard shows the state, not a probability.
+Supporting system engines
+These are system services, not Brains. Each has a defined input, output, and failure state.
+• Session Intelligence: Asian, London, and New York sessions, overlap, and broker server time with daylight-saving handling. Input: broker time and symbol session data. Failure: unknown session time disables session-dependent logic.
+• Volatility Service: ATR, candle range, expansion and contraction, unusual movement. Output: volatility state and a restriction flag. Failure: missing ATR history blocks volatility-dependent candidates.
+• News and Event Risk Service: high-impact events with timestamps and a verified source. Output: event window and trading restriction. Failure: unverified or missing calendar data sets the state to NOT VERIFIED and restricts trading.
+• Strategy Engine: loads only approved, versioned strategy specifications. Unapproved rules cannot enter production.
+• Entry Quality Engine: checks objective entry conditions for a candidate.
+• Execution Quality Engine: spread, slippage, requotes, rejected orders, latency, and request status. Runs in the EA.
+• Trade Management Engine: stop-loss, take-profit, break-even, trailing stop, partial close, and emergency exit, each only under approved rules. Runs in the EA.
+• Logging and State Engine: decisions, Brain outputs, risk approvals and rejections, order requests, broker results, position state, errors, restart recovery, and audit history.
+Open decision: whether Session and Volatility run in the backend, the EA, or both. The EA must hold the final copy of any value it uses to decide an order.
+Strategy research and testing
+Three candidate families are compared under identical conditions. None is pre-approved.
+• Strategy A, trend-aligned pullback: higher-timeframe direction, defined pullback, confirmation, invalidation, stop, target, regime suitability.
+• Strategy B, breakout and retest: defined breakout, closing confirmation, retest, failed-breakout rules, trigger, invalidation, stop, target.
+• Strategy C, liquidity sweep and reversal: liquidity level, sweep definition, reclaim, structure and displacement confirmation, trigger, invalidation, stop, target.
+Fair testing protocol
+• Same data quality requirements, date ranges, spread, commission, swap, and slippage assumptions.
+• Real-tick backtesting where the data is available, with the data source recorded.
+• Out-of-sample and walk-forward validation, split across market regimes.
+• Drawdown, sample size, parameter sensitivity, and overfitting checks.
+• Risk-adjusted metrics. Net profit alone never selects a strategy.
+Validation sequence
+1.  Historical backtest.
+2.  Out-of-sample test.
+3.  Walk-forward test.
+4.  Robustness test.
+5.  Demo forward evaluation of about 8 to 12 weeks.
+No strategy is declared profitable from one backtest. Results appear in the Strategy Lab with source, date range, cost assumptions, and sample size. Strategy selection requires evidence and Founder approval.
+Risk and Safety Supervisor
+The Supervisor lives inside the MT5 EA. It is independent of the backend and the Central Decision Engine. It can refuse any candidate, even one every Brain supports. The backend cannot disable it.
+Confirmed limits
+• Risk per trade: 0.50%.
+• Daily loss limit: 2%.
+• Weekly loss limit: 5%.
+• Three consecutive losses: 180-minute pause.
+• Maximum open positions: 1.
+• No martingale, grid, averaging up, or averaging down.
+Supervisor checks
+• Per-trade risk and position size against the account and broker specifications.
+• Stop-loss exists, is valid for the broker, and is on the correct side of price.
+• Spread and execution conditions within limits.
+• Duplicate-order protection using request IDs.
+• Restart recovery of position and pause state.
+• Connection and telemetry failure: fail closed.
+• Emergency suspension by the owner, from the dashboard, applied by the EA.
+Dashboard role: read-only display of Supervisor state. Limit changes are proposed in Personal Settings, validated by the backend, and applied by the EA only after its own checks, with an audit entry.
+Unresolved definitions are listed in the Unresolved Founder decisions section and must be confirmed before implementation.
+Technology recommendations
+Recommended stack (proposed, not approved):
+Layer
+Recommendation
+Reason
+MT5 EA
+MQL5
+Required for the terminal
+TradingView foundation
+Pine Script
+Required for the chart foundation
+Backend
+TypeScript on Node.js, hosted on a small managed service
+Clear types, mature Firebase Admin SDK, easy testing
+Dashboard
+TypeScript with React and a component library
+Mature responsive UI, good testing tools
+Auth and database
+Firebase Authentication and Cloud Firestore
+Owner login and realtime status with rules support
+Rules testing
+Firebase Emulator Suite
+Automated rule tests before deployment
+Version control and CI
+GitHub with automated tests and build checks
+Audit trail of every change
+Architecture options compared
+• Option A, MT5-centric: simplest execution path; weak for dashboards, history, and mobile access.
+• Option B, hybrid: MT5 for execution and final safety, backend for intelligence, dashboard on Firebase. Recommended, because it keeps the safety path near the broker and separates analysis from control.
+• Option C, backend-centric: strong analysis and testing; larger trust boundary and more latency between backend and broker.
+Hosting for the backend and dashboard should be chosen after the architecture is approved. Firebase Hosting, Cloud Functions, and Storage are optional and need a stated reason before use.
+Development roadmap, dependencies and acceptance criteria
+Phase gates: nothing starts until the previous phase has passed its audit and the Founder has approved it.
+Phase 1: Foundation and infrastructure
+• Scope: final architecture, project structure, TradingView foundation V1, MT5 EA foundation, backend skeleton, owner authentication, dashboard shell, data schemas, communication contracts, DEMO and LIVE data model, logging, error handling, Firestore rules, test infrastructure, CI, documentation.
+• No BUY or SELL signals, no order placement, no real-money trading.
+• Acceptance: TradingView script compiles and passes its tests; EA compiles and reads broker specs in a real terminal; rules tests pass in the emulator; authentication denies non-owners; telemetry rejects replays, bad timestamps, and invalid prices; dashboard renders every state including unavailable and error.
+Phase 2: Twelve Brains, intelligence, and strategy research
+• Scope: specifications and implementations of Brains 01 to 12, supporting engines, Central Decision Engine, independent Supervisor logic, decision logging, strategies A, B, and C, backtests, out-of-sample and walk-forward tests, robustness and overfitting analysis.
+• No live order execution.
+• Acceptance: each Brain has spec, schemas, tests, and documented limitations; no fabricated output; strategy results reproducible with recorded data sources.
+Phase 3: MT5 execution, trade management, and validation
+• Scope: order requests, broker response validation, position identification, stop-loss and take-profit management, sizing, break-even, trailing, partial close, emergency exit, duplicate protection, restart recovery, reconciliation, verified trade history, analytics, monitoring.
+• Demo forward evaluation of about 8 to 12 weeks before any live decision.
+• Acceptance: execution confirmed from broker results only; reconciliation matches broker history; recovery tested by forced restarts and network loss.
+Dependencies
+• Dashboard panels depend on the data schemas from Phase 1.
+• Brains depend on the TradingView and EA data foundations.
+• The Supervisor depends on telemetry and account data.
+• Strategy tests depend on recorded data and cost assumptions.
+• Execution depends on approved strategies and a passed Supervisor test suite.
+Phase audit requirements
+The cycle for every phase: BUILD, TEST, AUDIT, FIX, RE-TEST, RE-AUDIT, PASS, FOUNDER APPROVAL, NEXT PHASE.
+Outcomes
+• PASS: every mandatory criterion met, backed by recorded evidence. Founder approval still required.
+• FAIL: one or more mandatory criteria not met. Fix, re-test, re-audit.
+• BLOCKED: required tools, credentials, terminal, or accounts unavailable. Report the blocker. Never record a PASS.
+Evidence required for every audit
+• File-by-file review of the code and configuration.
+• Requirements traceability to each acceptance criterion.
+• Actual test commands and their output, including MT5 Strategy Tester logs where used.
+• Build output for MQL5, TypeScript, and Pine Script where applicable.
+• Firestore rules emulator results for allowed and denied operations.
+• Security findings, defect list with severity, fix evidence, and remaining risks.
+• Screenshots of the dashboard at phone and desktop widths, for every state.
+Severity
+• P0: critical security, capital protection, or data-integrity failure.
+• P1: major functional or reliability failure.
+• P2: moderate defect.
+• P3: minor issue.
+No open P0 or P1 may remain at a PASS. P2 and P3 items are documented and reviewed by the Founder.
+Rules for the audit itself
+• A self-review is labelled as a self-review, never as an independent audit.
+• An audit claims a full review only when every relevant file was read.
+• No test output is invented. Environments not available are recorded as NOT TESTED or BLOCKED.
+DEMO and LIVE separation
+DEMO and LIVE are kept apart at every layer. Mixing them is a P0 data-integrity defect.
+Layer
+Separation rule
+EA
+Account mode read from MQL5 account properties only. Refuses to run in an unexpected mode.
+Telemetry
+Every message names its mode; the backend rejects mismatches.
+Backend
+Mode is a required field in every trading record; no default mode.
+Firestore
+Collections scoped by mode; security rules check the mode field.
+Dashboard
+Each panel labels its mode; DEMO and LIVE are never shown together in one figure.
+Trade history
+Separate views; analytics computed per mode.
+Logs and reports
+Mode tag on every entry.
+Strict LIVE view
+Never falls back to DEMO data. Shows NOT VERIFIED or empty instead.
+DEMO sample or test data must never be displayed as real broker performance. Any sample data carries the SAMPLE label on every panel that shows it.
+Unresolved Founder decisions
+These must be decided before the affected phase starts. None has been assumed.
+#
+Decision
+Why it matters
+Needed by
+1
+Risk base: balance or equity
+Changes position size and loss limits
+Phase 2
+2
+Whether daily and weekly loss include floating P/L
+Changes when the pause triggers
+Phase 2
+3
+Timezone for daily and weekly resets
+Defines the loss windows
+Phase 2
+4
+How consecutive losses are counted, including partial closes and breakeven exits
+Defines the pause trigger
+Phase 2
+5
+Whether a safety pause survives an EA or backend restart
+Restart safety
+Phase 3
+6
+News data source and its licence
+Event restrictions depend on it
+Phase 2
+7
+Exact Exness symbol name and suffix
+Symbol matching
+Phase 1
+8
+TradingView plan and whether alerts can reach the backend within its terms
+Architecture of the readiness path
+Phase 1
+9
+Backend hosting location and VPS for continuous demo operation
+Cost, reliability, latency
+Phase 1
+10
+Dashboard owner session inactivity limit
+Security setting
+Phase 1
+11
+Log and raw telemetry retention periods
+Storage and audit
+Phase 1
+12
+Architecture option: A, B, or C
+Shapes every component
+Phase 1
+13
+Which component runs Session and Volatility services
+Where final values are computed
+Phase 2
+14
+Approval to start Phase 1
+Gate
+Phase 1
+External limitations
+These limits come from the market, the broker, or vendors. They shape the design and cannot be removed by code.
+• No centralised Gold order book is available through a retail OTC CFD broker. Order-book-style claims are not made.
+• Tick volume from the broker is not global institutional volume. It is labelled as tick volume everywhere.
+• The system cannot see bank orders, intentions, or private positions. Institutional-behaviour outputs are inferences from observable price.
+• TradingView does not provide unrestricted market data access to an external backend. Alert routing and any data reuse must be checked against its terms before design. No scraping or undocumented APIs.
+• Economic news sources vary in reliability and licence. Only timestamped, verified sources are used.
+• MT5 Strategy Tester results depend on tick data quality and modelling settings, and do not guarantee live execution.
+• Demo results do not guarantee live execution quality, fills, or profitability.
+• Broker server time and daylight-saving changes can shift session boundaries.
+• Firebase and hosting services have their own quotas, limits, and pricing.
+• The EA runs only while the terminal and the machine or VPS are running.
+Readiness assessment
+The scope is clear enough for an architecture review. It is not yet clear enough to start Phase 1 implementation.
+Category
+Sections
+Confirmed requirements
+Scope and purpose, Confirmed requirements, risk limits, timeframes, phase gates, DEMO and LIVE separation
+Proposed design
+Architecture overview, component responsibilities, data flow, database structure, security model, dashboard, technology, Brain specifications
+Unresolved decisions
+Unresolved Founder decisions table
+External limitations
+External limitations section
+Prerequisites before Phase 1
+1.  Founder decision on the architecture option (A, B, or C).
+2.  Founder decisions on items 7 to 11 in the Unresolved table.
+3.  Exact Exness symbol name and suffix.
+4.  Confirmation of the TradingView plan and alert route.
+5.  Confirmation of the owner account and multi-factor authentication method.
+6.  A clean, separate code repository, created by the Founder or approved for creation.
+7.  Explicit Founder instruction: APPROVE PHASE 1.
+Until these are answered, no code, Firebase resources, or MT5 changes should be created.

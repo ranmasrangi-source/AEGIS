@@ -1,0 +1,196 @@
+rules_version = '2';
+
+// ============================================================================
+// AEGIS XAU — FIRESTORE SECURITY RULES (PHASE 1 READ-ONLY FOUNDATION)
+// ============================================================================
+// Governing Reference: Construction Blueprint V1.0 Section 3.4 (Prompt 1),
+// Section 4.3, Section 4.5, Section 8.10.
+//
+// Security Principles Enforced:
+// 1. Deny by default across the entire database.
+// 2. Owner-only read access verified against the approved configuration
+//    document (/config/owner_identity -> ownerUid) or verified owner token.
+// 3. ZERO browser writes allowed to any collection in Phase 1.
+// 4. Mode segment strictly restricted to 'demo' and 'live'.
+// 5. Replay store (/replay) strictly denied to all browser clients.
+// 6. No collection group queries permitted.
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------------
+    // 0. GLOBAL DEFAULT-DENY CATCH-ALL
+    // ------------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ------------------------------------------------------------------------
+    // 1. PRIMITIVE HELPERS
+    // ------------------------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidMode(mode) {
+      return mode == 'demo' || mode == 'live';
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Owner identity verification:
+    // Checks UID against approved configuration document /config/owner_identity
+    // (never hardcoded UID in rules), or verified owner bootstrap email with
+    // mandatory email_verified == true check to prevent email spoofing.
+    function isConfiguredOwnerUid() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/config/owner_identity)
+        && get(/databases/$(database)/documents/config/owner_identity).data.ownerUid == request.auth.uid;
+    }
+
+    function isVerifiedBootstrapOwner() {
+      return isSignedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == 'adventurenepal04@gmail.com';
+    }
+
+    function isOwner() {
+      return isConfiguredOwnerUid() || isVerifiedBootstrapOwner();
+    }
+
+    // ------------------------------------------------------------------------
+    // 2. STATUS COLLECTION (/status/current) — Read-Only for Owner in Phase 1
+    // ------------------------------------------------------------------------
+    match /status/{docId} {
+      allow get: if isOwner() && isValidId(docId) && docId == 'current';
+      allow list: if false;
+      allow create, update, delete: if false;
+    }
+
+    // ------------------------------------------------------------------------
+    // 3. SYSTEM HEALTH (/system/{docId}) — Read-Only for Owner in Phase 1
+    // ------------------------------------------------------------------------
+    match /system/{docId} {
+      allow get: if isOwner() && isValidId(docId);
+      allow list: if isOwner() && existing().source is string;
+      allow create, update, delete: if false;
+    }
+
+    // ------------------------------------------------------------------------
+    // 4. CONFIGURATION (/config/global & /config/modes/{mode}/{docId})
+    //    Strictly Read-Only in Phase 1 (V4.1 Section 6)
+    // ------------------------------------------------------------------------
+    match /config/{docId} {
+      allow get: if isOwner() && isValidId(docId);
+      allow list: if false;
+      allow create, update, delete: if false;
+    }
+
+    match /config/modes/{mode}/{docId} {
+      allow get: if isOwner() && isValidMode(mode) && isValidId(docId) && existing().mode == mode;
+      allow list: if isOwner() && isValidMode(mode) && existing().mode == mode;
+      allow create, update, delete: if false;
+    }
+
+    // ------------------------------------------------------------------------
+    // 5. ADMIN AUDIT (/admin_audit/{docId}) — Owner Read-Only, Append-Only by Backend
+    // ------------------------------------------------------------------------
+    match /admin_audit/{docId} {
+      allow get: if isOwner() && isValidId(docId);
+      allow list: if isOwner() && existing().actor is string;
+      allow create, update, delete: if false;
+    }
+
+    // ------------------------------------------------------------------------
+    // 6. MODE-SCOPED TRADING & TELEMETRY COLLECTIONS (/modes/{mode}/...)
+    //    Only 'demo' and 'live' permitted; resource.data.mode must match {mode}.
+    //    Zero browser writes permitted in Phase 1.
+    // ------------------------------------------------------------------------
+    match /modes/{mode}/decisions/{docId} {
+      allow get: if isOwner() && isValidMode(mode) && isValidId(docId) && existing().mode == mode;
+      allow list: if isOwner() && isValidMode(mode) && existing().mode == mode;
+      allow create, update, delete: if false;
+    }
+
+    match /modes/{mode}/brain_outputs/{docId} {
+      allow get: if isOwner() && isValidMode(mode) && isValidId(docId) && existing().mode == mode;
+      allow list: if isOwner() && isValidMode(mode) && existing().mode == mode;
+      allow create, update, delete: if false;
+    }
+
+    match /modes/{mode}/risk_events/{docId} {
+      allow get: if isOwner() && isValidMode(mode) && isValidId(docId) && existing().mode == mode;
+      allow list: if isOwner() && isValidMode(mode) && existing().mode == mode;
+      allow create, update, delete: if false;
+    }
+
+    match /modes/{mode}/commands/{docId} {
+      allow get: if isOwner() && isValidMode(mode) && isValidId(docId) && existing().mode == mode;
+      allow list: if isOwner() && isValidMode(mode) && existing().mode == mode;
+      allow create, update, delete: if false;
+    }
+
+    match /modes/{mode}/order_requests/{docId} {
+      allow get: if isOwner() && isValidMode(mode) && isValidId(docId) && existing().mode == mode;
+      allow list: if isOwner() && isValidMode(mode) && existing().mode == mode;
+      allow create, update, delete: if false;
+    }
+
+    match /modes/{mode}/executions/{docId} {
+      allow get: if isOwner() && isValidMode(mode) && isValidId(docId) && existing().mode == mode;
+      allow list: if isOwner() && isValidMode(mode) && existing().mode == mode;
+      allow create, update, delete: if false;
+    }
+
+    match /modes/{mode}/trades/{docId} {
+      allow get: if isOwner() && isValidMode(mode) && isValidId(docId) && existing().mode == mode;
+      allow list: if isOwner() && isValidMode(mode) && existing().mode == mode;
+      allow create, update, delete: if false;
+    }
+
+    match /modes/{mode}/analytics/{docId} {
+      allow get: if isOwner() && isValidMode(mode) && isValidId(docId) && existing().mode == mode;
+      allow list: if isOwner() && isValidMode(mode) && existing().mode == mode;
+      allow create, update, delete: if false;
+    }
+
+    match /modes/{mode}/telemetry_status/{docId} {
+      allow get: if isOwner() && isValidMode(mode) && isValidId(docId) && existing().mode == mode;
+      allow list: if isOwner() && isValidMode(mode) && existing().mode == mode;
+      allow create, update, delete: if false;
+    }
+
+    match /modes/{mode}/strategy_runs/{docId} {
+      allow get: if isOwner() && isValidMode(mode) && isValidId(docId) && existing().mode == mode;
+      allow list: if isOwner() && isValidMode(mode) && existing().mode == mode;
+      allow create, update, delete: if false;
+    }
+
+    match /modes/{mode}/alerts/{docId} {
+      allow get: if isOwner() && isValidMode(mode) && isValidId(docId) && existing().mode == mode;
+      allow list: if isOwner() && isValidMode(mode) && existing().mode == mode;
+      allow create, update, delete: if false;
+    }
+
+    match /modes/{mode}/logs/{docId} {
+      allow get: if isOwner() && isValidMode(mode) && isValidId(docId) && existing().mode == mode;
+      allow list: if isOwner() && isValidMode(mode) && existing().mode == mode;
+      allow create, update, delete: if false;
+    }
+
+    // ------------------------------------------------------------------------
+    // 7. BACKEND-ONLY REPLAY STORE (/replay/{docId})
+    //    Strictly denied to all browser clients.
+    // ------------------------------------------------------------------------
+    match /replay/{docId} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,1747 @@
+AEGIS XAU
+
+MASTER PROJECT BLUEPRINT — COMPLETE PROJECT UNDERSTANDING & THREE-PHASE DEVELOPMENT
+
+Document Type: Master Project Requirements & Development Constitution
+Project: AEGIS XAU
+Primary Instrument: XAUUSD (Gold)
+Primary Trading Platform: MetaTrader 5 (MT5)
+Development Process: Three Strictly Controlled Phases
+Approval Authority: Founder
+Initial Operating Scope: Private, owner-only trading system
+Current Development Stage: Architecture and requirements definition. No implementation is approved yet.
+
+---
+
+PART 1 — YOUR ROLE AND RESPONSIBILITY
+
+You are assigned as the Principal Software Architect, Senior MQL5 Engineer, Quantitative Research Engineer, Trading Systems Engineer, AI/Intelligence Systems Architect, Backend Engineer, Firebase Security Engineer, UI/UX Engineer, QA Engineer, and Technical Auditor for AEGIS XAU.
+
+You must understand the entire project before proposing or writing code.
+
+You are not being asked to create a simple trading dashboard, a basic indicator, a collection of AI cards, or a demo trading bot.
+
+You are being asked to help design and eventually build a complete, integrated, intelligent XAUUSD trading system with:
+
+- Market data foundations.
+- MT5 Expert Advisor.
+- TradingView foundation.
+- Twelve specialist intelligence brains.
+- Bank/Institutional market analysis.
+- Smart Money Concepts (SMC) analysis.
+- Central Decision Engine.
+- Independent Risk & Safety Supervisor.
+- Automated trading and execution.
+- Trade and position management.
+- Backend and database.
+- Private owner dashboard.
+- Complete logging and monitoring.
+- Strategy research and validation.
+- Security, testing, and recovery systems.
+
+The final system must be engineered carefully, tested with evidence, and developed through three strict phases.
+
+Your first responsibility is to understand and document the project. Do not start coding yet.
+
+---
+
+PART 2 — PROJECT VISION
+
+2.1 What is AEGIS XAU?
+
+AEGIS XAU is an intelligent, risk-controlled XAUUSD trading system intended to analyse the Gold market, evaluate trading opportunities through multiple specialist intelligence modules, make structured trading decisions, and eventually execute approved trades through MT5.
+
+The system should combine different forms of market analysis rather than depend on one indicator or one trading strategy.
+
+It should evaluate:
+
+1. Macroeconomic and fundamental conditions.
+2. Institutional market behaviour using observable evidence.
+3. Liquidity conditions.
+4. Order-flow information where reliable data is available.
+5. Market structure.
+6. Smart Money Concepts.
+7. Momentum and displacement.
+8. Volatility and market regimes.
+9. Trading sessions.
+10. Strategy quality.
+11. Execution conditions.
+12. Risk and capital protection.
+
+The goal is to build a reliable and maintainable system that makes disciplined decisions and protects capital.
+
+There is NO guaranteed profit target or guaranteed win rate.
+
+Do not claim that AEGIS XAU has a profitable trading edge until sufficient independent testing supports that conclusion.
+
+2.2 Current project scope
+
+The current scope is a private system for the Founder’s own use.
+
+Build professional engineering quality, but do not add commercial product features by default.
+
+Do not add:
+
+- Public registration.
+- Customer accounts.
+- Subscription plans.
+- Payment systems.
+- Public licensing portal.
+- Customer-facing sales website.
+- Multi-tenant customer management.
+
+Future commercial expansion may be considered only through a separate Founder decision.
+
+---
+
+PART 3 — TRADING ENVIRONMENT AND INITIAL REQUIREMENTS
+
+The initial target environment is:
+
+Requirement| Initial setting
+Broker environment| Exness MT5
+Account type| Standard
+Primary instrument| XAUUSD
+Trading platform| MetaTrader 5
+Main execution language| MQL5
+Direction timeframe| M15
+Confirmation timeframe| M5
+Entry timeframe| M1
+Initial testing account| Demo
+Operating scope| Private owner use
+
+Do not hard-code broker-specific assumptions such as digits, tick size, tick value, contract size, volume step, stop levels, or execution rules.
+
+Read and validate actual broker symbol specifications at runtime.
+
+Support symbol suffixes and configurable symbol matching where necessary.
+
+The initial strategy timeframes are:
+
+- M15: Direction and broader market context.
+- M5: Setup and confirmation.
+- M1: Entry timing.
+
+These are the intended strategy timeframes, not permission to trade during Phase 1.
+
+3.1 Initial Founder risk settings
+
+Preserve these initial risk requirements:
+
+- Risk per trade: 0.50%.
+- Maximum daily loss: 2%.
+- Maximum weekly loss: 5%.
+- Three consecutive losses: pause trading for 180 minutes.
+- Maximum simultaneous open positions: 1.
+- No martingale.
+- No grid trading.
+- No averaging down or averaging up to rescue a losing position.
+
+These settings must be documented and configurable where appropriate.
+
+Do not silently increase or weaken any risk limit.
+
+Before implementation, identify unresolved definitions, including:
+
+- Whether risk is calculated from balance or equity.
+- Whether daily loss includes floating losses.
+- Whether weekly loss includes realised and floating losses.
+- Which timezone defines daily and weekly resets.
+- How consecutive losses are counted.
+- How a restart affects an active safety pause.
+
+Ask for Founder approval on these definitions before finalising the risk implementation.
+
+---
+
+PART 4 — COMPLETE SYSTEM ARCHITECTURE
+
+AEGIS XAU consists of several connected but separately responsible components.
+
+4.1 TradingView Foundation
+
+TradingView is intended to provide an initial market-data and timeframe-readiness foundation.
+
+It is not automatically the complete trading engine.
+
+The TradingView foundation must be developed and tested separately.
+
+4.2 MT5 Expert Advisor
+
+The MT5 EA is responsible for broker-side integration and, in later phases, trade execution.
+
+It must eventually handle:
+
+- Broker and symbol information.
+- Market data.
+- Account information.
+- Trading permissions.
+- Position and order information.
+- Trade requests.
+- Execution results.
+- Stop-loss and take-profit management.
+- Trade protection.
+- Connection and error handling.
+
+The MT5 EA must not claim a trade was executed merely because a request was sent. Actual broker transaction results must be checked.
+
+4.3 Intelligence and Decision Backend
+
+The intelligence layer coordinates market analysis and decision-making.
+
+Its responsibilities may include:
+
+- Data validation.
+- Specialist Brain coordination.
+- Strategy evaluation.
+- Signal aggregation.
+- Decision explanation.
+- Risk approval requests.
+- Decision history.
+- System monitoring.
+
+The architecture must determine whether this intelligence should run inside MT5, in a local service, in a cloud backend, or through a carefully designed hybrid.
+
+Compare the alternatives before choosing.
+
+4.4 Central Decision Engine
+
+The Central Decision Engine receives validated outputs from the specialist intelligence modules.
+
+It must:
+
+- Evaluate agreement and disagreement between Brains.
+- Check data freshness.
+- Check whether required market information is available.
+- Evaluate setup quality.
+- Consider strategy conditions.
+- Identify conflicting evidence.
+- Explain the reason for a decision.
+- Request approval from the independent Risk & Safety Supervisor.
+
+Possible decision states:
+
+- BUY CANDIDATE.
+- SELL CANDIDATE.
+- WAIT.
+- REJECT.
+- DATA INSUFFICIENT.
+- RISK BLOCKED.
+
+A candidate signal is not an executed trade.
+
+The Central Decision Engine must never override the independent Risk & Safety Supervisor.
+
+4.5 Independent Risk & Safety Supervisor
+
+This is a separate, mandatory safety authority.
+
+Its responsibilities include:
+
+- Per-trade risk validation.
+- Daily and weekly loss limits.
+- Maximum open positions.
+- Consecutive-loss protection.
+- Maximum exposure.
+- Stop-loss validation.
+- Position sizing validation.
+- Spread and execution-condition checks.
+- Emergency trading suspension.
+- Connection failure protection.
+- Protection against duplicate orders.
+- Protection against unexpected restarts.
+
+The Risk & Safety Supervisor must be able to reject a trading decision even if every intelligence Brain supports that trade.
+
+---
+
+PART 5 — TWELVE SPECIALIST AI / INTELLIGENCE BRAINS
+
+The current design target is exactly 12 specialist Brains.
+
+The proposed architecture separates them into two main analytical families:
+
+- 6 Bank / Institutional Intelligence Brains.
+- 6 Smart Money Concepts (SMC) Brains.
+
+These are specialised analysis modules, not twelve decorative dashboard cards.
+
+Each Brain must have a defined responsibility, data inputs, output schema, decision logic, limitations, and tests.
+
+Do not claim a Brain is operational until its actual implementation and tests exist.
+
+GROUP A — BANK / INSTITUTIONAL INTELLIGENCE
+
+BRAIN 01 — Macro & Fundamental Intelligence
+
+Responsibilities:
+
+- Analyse relevant economic conditions.
+- Evaluate interest-rate expectations.
+- Analyse inflation and employment data.
+- Monitor relevant central-bank announcements.
+- Identify major economic event risks.
+- Evaluate fundamental conditions affecting Gold.
+- Identify when macroeconomic uncertainty is unusually high.
+
+Requirements:
+
+- Use reliable, timestamped data sources.
+- Identify unavailable data.
+- Distinguish confirmed information from estimates.
+- Never invent economic news.
+- Never treat a news headline alone as a guaranteed trading signal.
+
+BRAIN 02 — Cross-Market Intelligence
+
+Responsibilities:
+
+- Analyse the US Dollar Index (DXY) where reliable data is available.
+- Analyse US Treasury yields where reliable data is available.
+- Analyse relevant correlated markets.
+- Evaluate historical and current relationships.
+- Identify correlation breakdowns.
+- Detect conflicting cross-market evidence.
+
+Do not assume that correlation always implies causation.
+
+BRAIN 03 — Market Regime Intelligence
+
+Responsibilities:
+
+- Identify trending conditions.
+- Identify ranging conditions.
+- Identify high-volatility conditions.
+- Identify low-volatility conditions.
+- Identify transitions between regimes.
+- Evaluate whether the current market regime supports or weakens a strategy.
+
+Possible outputs:
+
+- TRENDING.
+- RANGING.
+- HIGH VOLATILITY.
+- LOW VOLATILITY.
+- TRANSITION.
+- UNKNOWN.
+
+BRAIN 04 — Institutional Behaviour Intelligence
+
+Responsibilities:
+
+- Analyse observable price behaviour that may indicate accumulation or distribution.
+- Evaluate absorption-like behaviour when the available data supports it.
+- Identify unusual activity around important price levels.
+- Evaluate expansion and contraction in price activity.
+- Identify possible institutional participation patterns.
+
+Important limitation:
+
+AEGIS XAU cannot see the private intentions, secret orders, or complete positions of banks.
+
+It may infer possible institutional behaviour from observable data only.
+
+Never present an inference as confirmed bank activity.
+
+BRAIN 05 — Order Flow Intelligence
+
+Responsibilities:
+
+- Analyse available buying and selling pressure.
+- Evaluate tick volume or other available volume information.
+- Identify imbalances where the data supports them.
+- Evaluate execution-side conditions.
+- Detect potential pressure shifts.
+
+Important limitation:
+
+XAUUSD through a retail OTC CFD broker does not automatically provide a complete centralised global Gold order book.
+
+Identify the actual data source and its limitations.
+
+Do not call tick volume real global institutional volume.
+
+BRAIN 06 — Liquidity Mapping Intelligence
+
+Responsibilities:
+
+- Identify equal highs and equal lows.
+- Identify potential buy-side liquidity.
+- Identify potential sell-side liquidity.
+- Identify previous session highs and lows.
+- Identify previous day and week highs and lows.
+- Identify relevant swing points.
+- Map important liquidity zones.
+- Evaluate proximity to liquidity.
+
+The output must distinguish a detected price level from a prediction that the level will be taken.
+
+---
+
+GROUP B — SMART MONEY CONCEPTS (SMC)
+
+BRAIN 07 — Market Structure Intelligence
+
+Responsibilities:
+
+- Detect swing highs and swing lows.
+- Detect Break of Structure (BOS).
+- Detect Change of Character (CHOCH).
+- Detect Market Structure Shift (MSS).
+- Evaluate bullish and bearish structure.
+- Track higher-timeframe and lower-timeframe structure.
+- Identify structural conflicts.
+
+All definitions must be objective and testable.
+
+BRAIN 08 — Liquidity Sweep Intelligence
+
+Responsibilities:
+
+- Detect possible buy-side liquidity sweeps.
+- Detect possible sell-side liquidity sweeps.
+- Evaluate wick penetration and close location.
+- Evaluate reclaim conditions.
+- Distinguish a genuine defined sweep pattern from ordinary price noise.
+- Check whether the sweep is supported by structure and context.
+
+Do not label every wick beyond a high or low as a stop hunt.
+
+BRAIN 09 — Displacement & Momentum Intelligence
+
+Responsibilities:
+
+- Detect strong directional price displacement.
+- Evaluate candle body and range.
+- Evaluate momentum expansion.
+- Identify weak versus strong movement.
+- Evaluate whether displacement confirms a structure change.
+- Identify possible exhaustion.
+
+Use closed-candle confirmation wherever required by the approved strategy.
+
+BRAIN 10 — Order Block Intelligence
+
+Responsibilities:
+
+- Define objective bullish and bearish Order Block rules.
+- Identify candidate Order Blocks.
+- Evaluate whether a displacement or structure event validates the zone.
+- Track mitigation and invalidation.
+- Evaluate zone freshness.
+- Distinguish valid candidate zones from weak or invalid zones.
+
+Do not mark every opposite-coloured candle as a valid Order Block.
+
+BRAIN 11 — Fair Value Gap & Imbalance Intelligence
+
+Responsibilities:
+
+- Detect bullish and bearish Fair Value Gaps.
+- Define the exact candle relationships used.
+- Evaluate gap size and market context.
+- Track mitigation.
+- Track invalidation.
+- Evaluate whether an imbalance is relevant to the current setup.
+
+Do not assume every FVG creates a profitable entry.
+
+BRAIN 12 — Premium, Discount & Dealing Range Intelligence
+
+Responsibilities:
+
+- Define valid dealing ranges.
+- Identify range high and low.
+- Calculate midpoint and equilibrium.
+- Identify premium and discount zones.
+- Evaluate price location.
+- Identify invalid or poorly defined dealing ranges.
+
+Do not calculate premium or discount from arbitrary swing points without a defined structural rule.
+
+---
+
+PART 6 — SUPPORTING INTELLIGENCE AND SYSTEM ENGINES
+
+The 12 specialist Brains are not the entire system.
+
+The following supporting engines are also required.
+
+They are separate system services and should not be falsely counted as additional specialist Brains.
+
+6.1 Session Intelligence Service
+
+Evaluate:
+
+- Asian session.
+- London session.
+- New York session.
+- Session overlap.
+- Session-specific behaviour.
+- Broker server time.
+- Daylight-saving changes where relevant.
+
+6.2 Volatility Service
+
+Evaluate:
+
+- ATR.
+- Candle range.
+- Volatility expansion.
+- Volatility contraction.
+- Unusual market movement.
+- Conditions where trading should be restricted.
+
+6.3 News & Event Risk Service
+
+Evaluate important scheduled economic events.
+
+Use reliable timestamped sources.
+
+Identify:
+
+- High-impact events.
+- Event timing.
+- Data availability.
+- Event-related trading restrictions.
+
+Do not invent news or assume a news source is reliable without verification.
+
+6.4 Strategy Engine
+
+Evaluate the approved strategy specifications.
+
+It must not allow unapproved strategy rules to enter production.
+
+6.5 Entry Quality Engine
+
+Evaluate whether a candidate entry meets objective conditions.
+
+6.6 Execution Quality Engine
+
+Evaluate:
+
+- Spread.
+- Slippage.
+- Requotes or rejected orders.
+- Latency.
+- Broker execution response.
+- Trade request status.
+
+6.7 Trade Management Engine
+
+Eventually manage:
+
+- Initial stop-loss.
+- Take-profit.
+- Break-even.
+- Trailing stop.
+- Partial close.
+- Position protection.
+- Emergency exit.
+
+All actions must follow approved rules.
+
+6.8 Logging and State Engine
+
+Maintain:
+
+- Decision records.
+- Brain outputs.
+- Risk approvals and rejections.
+- Order requests.
+- Broker execution results.
+- Position state.
+- Errors.
+- Restart recovery state.
+- Audit history.
+
+---
+
+PART 7 — STRATEGY RESEARCH AND VALIDATION
+
+Three candidate strategy families must be compared fairly.
+
+No strategy is pre-approved as the final winner.
+
+STRATEGY A — Trend-Aligned Pullback
+
+Evaluate:
+
+- Higher-timeframe direction.
+- Pullback definition.
+- Valid setup conditions.
+- Entry confirmation.
+- Invalidation.
+- Stop-loss.
+- Take-profit.
+- Market regime suitability.
+
+STRATEGY B — Breakout & Retest
+
+Evaluate:
+
+- Valid breakout definition.
+- Closing confirmation.
+- Retest definition.
+- Failed breakout conditions.
+- Entry trigger.
+- Invalidation.
+- Stop-loss.
+- Take-profit.
+
+STRATEGY C — Liquidity Sweep & Reversal
+
+Evaluate:
+
+- Liquidity level definition.
+- Sweep definition.
+- Reclaim conditions.
+- Structure confirmation.
+- Displacement confirmation.
+- Entry trigger.
+- Invalidation.
+- Stop-loss.
+- Take-profit.
+
+7.1 Fair testing protocol
+
+All three strategies must be tested under comparable conditions.
+
+Testing must include:
+
+- Identical data quality requirements.
+- Identical date ranges where possible.
+- Comparable spread assumptions.
+- Commission.
+- Swap where applicable.
+- Slippage assumptions.
+- Real-tick backtesting where available.
+- Out-of-sample testing.
+- Walk-forward validation.
+- Different market regimes.
+- Drawdown analysis.
+- Trade sample-size analysis.
+- Parameter sensitivity.
+- Robustness checks.
+- Overfitting detection.
+- Risk-adjusted performance.
+
+Do not choose the strategy with the highest historical net profit alone.
+
+Evaluate stability, drawdown, execution sensitivity, sample size, and out-of-sample performance.
+
+A strategy must not be declared profitable merely because one backtest looks good.
+
+The intended later validation sequence includes:
+
+1. Historical backtesting.
+2. Out-of-sample testing.
+3. Walk-forward testing.
+4. Robustness testing.
+5. Demo forward evaluation for approximately 8–12 weeks.
+
+The final strategy selection requires evidence and Founder approval.
+
+---
+
+PART 8 — TRADINGVIEW FOUNDATION V1
+
+The first TradingView development task is a non-trading foundation.
+
+This foundation must be built and validated separately.
+
+8.1 Scope
+
+It must provide:
+
+- Configurable XAUUSD symbol validation.
+- Exact symbol matching by default.
+- M15 data readiness.
+- M5 data readiness.
+- M1 data readiness.
+- Confirmed candle detection.
+- Timeframe-specific history checks.
+- Last candle close time.
+- Data freshness checks.
+- READY / WAITING / ERROR states.
+- A simple status dashboard.
+- Transition-based alerts.
+
+8.2 Technical requirements
+
+- Use properly confirmed candle data.
+- Prevent higher-timeframe repainting.
+- Use separate history checks for each timeframe.
+- Validate timeframe alignment.
+- Enforce the intended M1 chart timeframe if required by the design.
+- Validate data freshness using candle close times.
+- Do not show READY if required history or data is missing.
+- Avoid repeated alerts when the state has not changed.
+- Handle symbol mismatch and unavailable history explicitly.
+
+8.3 Explicit exclusions
+
+TradingView Foundation V1 must NOT contain:
+
+- BUY or SELL trading signals.
+- Automated order execution.
+- Entry logic.
+- Exit logic.
+- Stop-loss or take-profit trading logic.
+- Broker account control.
+- Trading P/L calculation.
+
+The first task is data and readiness validation only.
+
+The previous TradingView draft was not approved as a finished foundation. A new implementation must incorporate the known review requirements:
+
+- Correct Pine Script type declarations.
+- Per-timeframe history counts.
+- Correct higher-timeframe confirmation.
+- Appropriate M1 chart enforcement.
+- Transition-only alerts.
+- Exact symbol matching by default.
+- Correct READY / WAITING / ERROR states.
+- Staleness based on candle closing time.
+
+Do not claim TradingView Foundation V1 is complete until it is compiled and tested.
+
+---
+
+PART 9 — MT5 EA FOUNDATION
+
+The MT5 Foundation must initially be a non-trading system.
+
+9.1 Foundation responsibilities
+
+- Validate the configured symbol.
+- Handle symbol suffixes.
+- Read broker symbol specifications.
+- Validate chart and timeframe requirements.
+- Validate M15, M5, and M1 history readiness.
+- Detect new candles.
+- Use closed-candle data for confirmed analysis.
+- Validate data freshness.
+- Retry data loading when history is unavailable.
+- Use correct bar-count checks.
+- Provide diagnostic logs.
+- Reserve a configurable Magic Number.
+- Detect account and trading permissions.
+- Report connection status.
+
+9.2 Initial market intelligence candidates
+
+A later foundation extension may include:
+
+- EMA 50.
+- EMA 200.
+- ADX 14.
+- ATR 14.
+
+These should initially be calculated from appropriate closed candles.
+
+They are analytical components, not proof of a profitable strategy.
+
+9.3 Account mode verification
+
+Use actual MT5 account information from the trusted EA environment.
+
+Evaluate account trade mode using the appropriate MQL5 account properties.
+
+Do not allow a dashboard field or client-supplied value to determine whether an account is DEMO or LIVE.
+
+9.4 Explicit exclusions
+
+During Phase 1, the MT5 Foundation must NOT:
+
+- Place market orders.
+- Place pending orders.
+- Modify live positions.
+- Close live positions.
+- Run an automatic trading strategy.
+
+The Foundation must first prove data readiness, correct broker information, and reliable diagnostics.
+
+---
+
+PART 10 — DATA ARCHITECTURE AND DATA INTEGRITY
+
+This is a critical part of AEGIS XAU.
+
+Every important data value must have a known source and a clear meaning.
+
+For each data field, define:
+
+- Source.
+- Timestamp.
+- Timezone.
+- Instrument.
+- Timeframe.
+- Data type.
+- Validation.
+- Freshness limit.
+- Provenance.
+- Whether it is live, demo, historical, estimated, or sample data.
+
+10.1 Required system states
+
+Use explicit states such as:
+
+- LIVE.
+- DEMO.
+- DISCONNECTED.
+- UNKNOWN.
+- STALE.
+- OFFLINE.
+- ERROR.
+- NOT VERIFIED.
+
+Never combine DEMO and LIVE datasets.
+
+10.2 Live connection proof
+
+A Firestore record alone must never prove that MT5 is connected or operating on a live account.
+
+The system must establish an authenticated and validated source of MT5 information.
+
+Validate:
+
+- Account mode.
+- Symbol.
+- Broker identity where available.
+- Message authentication.
+- Timestamp.
+- Message freshness.
+- Data integrity.
+- Ownership.
+- Duplicate messages.
+- Replay attempts.
+
+Reject:
+
+- Future timestamps outside an approved tolerance.
+- Malformed packets.
+- Invalid prices.
+- Non-finite values.
+- Invalid bid/ask relationships.
+- Invalid spread.
+- Incorrect symbols.
+- Unexpected account modes.
+- Unauthenticated data.
+
+Each telemetry field must have its own freshness status.
+
+A fresh heartbeat must not make unrelated stale market or risk data appear fresh.
+
+Fail closed whenever source, authentication, or provenance is uncertain.
+
+10.3 DEMO and LIVE separation
+
+A strict separation must exist in:
+
+- MT5 connection state.
+- Backend data.
+- Firestore documents.
+- Dashboard display.
+- Trade history.
+- Analytics.
+- Logs.
+- Reports.
+
+Strict LIVE mode must never silently use DEMO fallback data.
+
+DEMO sample data must never appear as real broker performance.
+
+---
+
+PART 11 — BACKEND AND COMMUNICATION ARCHITECTURE
+
+The backend must provide a secure and maintainable communication layer.
+
+Evaluate:
+
+- MT5 EA to backend communication.
+- TradingView alerts or supported data exchange.
+- Backend to intelligence modules.
+- Backend to dashboard.
+- Backend to database.
+- Backend to logging and monitoring.
+
+Define:
+
+- API contracts.
+- Data schemas.
+- Authentication.
+- Authorization.
+- Message validation.
+- Rate limiting.
+- Replay protection.
+- Error handling.
+- Retry rules.
+- Idempotency.
+- Connection timeouts.
+- Health checks.
+- Recovery behaviour.
+
+Do not assume TradingView can provide unrestricted market-data access to an external backend.
+
+Do not use unsupported scraping, reverse-engineered APIs, or undocumented platform access.
+
+Explain data-source licensing and technical limitations.
+
+---
+
+PART 12 — FIREBASE AND DATABASE REQUIREMENTS
+
+Firebase is a possible part of the system, not a mandatory solution for every component.
+
+Evaluate the actual requirements before choosing Firebase services.
+
+Possible services include:
+
+- Firebase Authentication.
+- Cloud Firestore.
+- Cloud Functions or another suitable backend runtime.
+- Firebase Hosting if appropriate.
+- Firebase Storage if reports or files require it.
+- Firebase App Check where applicable.
+- Firebase Emulator Suite for testing.
+
+Do not add services without a reason.
+
+12.1 Authentication
+
+- Private owner-only login.
+- No public signup.
+- No anonymous access to private system data.
+- Strong authorization.
+- Secure session handling.
+
+12.2 Firestore
+
+Define collections and data models for:
+
+- System configuration.
+- Connection status.
+- Market data metadata.
+- Brain outputs.
+- Decision records.
+- Risk decisions.
+- Trade history.
+- Execution records.
+- Logs.
+- Audit history.
+- System health.
+
+Do not store everything in one unstructured document.
+
+Define ownership and access boundaries.
+
+12.3 Security
+
+- Deny access by default.
+- Use strict Firestore Security Rules.
+- Validate data types and ownership.
+- Test read, write, update, and delete permissions.
+- Use Firebase Emulator for automated rules testing.
+- Protect backend service credentials.
+- Use server-side IAM for privileged Admin SDK operations.
+- Keep secrets out of frontend code and GitHub.
+- Never expose private keys in logs.
+
+Important: Server-side Firebase Admin SDK operations do not rely on client Firestore Security Rules in the same way as browser clients. Secure server access with appropriate IAM and backend authorization.
+
+12.4 Credentials
+
+Never ask the Founder to paste:
+
+- Firebase Service Account JSON.
+- Private keys.
+- Admin SDK secrets.
+- Passwords.
+- OTPs.
+- Access tokens.
+- Broker passwords.
+- MT5 investor or master passwords.
+
+Use placeholders and safe environment-variable instructions.
+
+Explain which Firebase Web configuration values are needed and where they belong.
+
+A Firebase Web API key is not a substitute for authentication, authorization, or security rules.
+
+---
+
+PART 13 — PRIVATE OWNER DASHBOARD
+
+The dashboard is for monitoring and controlling the Founder’s own system.
+
+It must be professional, clear, responsive, and usable on mobile.
+
+Proposed sections:
+
+13.1 Overview
+
+- Overall system status.
+- Market status.
+- TradingView foundation status.
+- MT5 connection status.
+- Risk status.
+- Active strategy status.
+- Data freshness.
+- System warnings.
+
+13.2 Twelve Brains Monitor
+
+For each Brain:
+
+- Name.
+- Responsibility.
+- Status.
+- Data availability.
+- Last update.
+- Output.
+- Confidence representation where properly calibrated.
+- Errors.
+- Explanation.
+
+Do not show fake AI output.
+
+13.3 Market Intelligence
+
+- XAUUSD market data status.
+- M15 direction context.
+- M5 confirmation context.
+- M1 readiness.
+- Structure.
+- Liquidity.
+- Volatility.
+- Session.
+- Market regime.
+
+13.4 TradingView Monitor
+
+- Symbol validation.
+- Timeframe readiness.
+- History readiness.
+- Last candle close.
+- Freshness.
+- READY / WAITING / ERROR.
+
+13.5 MT5 Monitor
+
+- Connection.
+- Broker.
+- Account mode.
+- Symbol.
+- Timeframes.
+- Broker specifications.
+- Heartbeat.
+- Data freshness.
+- Execution status when later enabled.
+
+13.6 Risk & Safety Monitor
+
+- Per-trade risk.
+- Daily loss.
+- Weekly loss.
+- Drawdown.
+- Consecutive losses.
+- Open positions.
+- Exposure.
+- Safety pause.
+- Risk blocks.
+
+13.7 Strategy Lab
+
+- Strategy specifications.
+- Backtest records.
+- Out-of-sample results.
+- Walk-forward results.
+- Demo forward results.
+- Strategy comparison.
+
+13.8 Trade Analytics
+
+Only use verified trade records.
+
+Show:
+
+- Total trades.
+- Win rate.
+- Net profit/loss.
+- Profit factor.
+- Average win/loss.
+- Drawdown.
+- Risk/reward.
+- Strategy comparison.
+
+Clearly label DEMO, LIVE, HISTORICAL, SAMPLE, and UNVERIFIED data.
+
+13.9 System Logs and Audit
+
+- System events.
+- Errors.
+- Brain decisions.
+- Risk rejections.
+- MT5 transaction records.
+- Backend events.
+- Authentication events.
+- Configuration changes.
+- Audit trail.
+
+13.10 Settings
+
+- Symbol settings.
+- Timeframes.
+- Risk limits.
+- Heartbeat settings.
+- Data freshness settings.
+- Strategy configuration.
+- System mode.
+- Notifications.
+
+Any safety-critical setting change must be validated and logged.
+
+---
+
+PART 14 — SECURITY, SAFETY AND FAILURE HANDLING
+
+Security and capital protection must be designed from the beginning.
+
+Evaluate:
+
+- Authentication.
+- Authorization.
+- Secret management.
+- API security.
+- Firestore rules.
+- Backend IAM.
+- Input validation.
+- Rate limiting.
+- Replay protection.
+- Data isolation.
+- Audit logging.
+- Dependency vulnerabilities.
+- Error recovery.
+- Restart recovery.
+- Duplicate-order prevention.
+- Stale-data protection.
+- Network loss.
+- Broker rejection.
+- Partial execution.
+- Unexpected position state.
+
+Never let AI outputs bypass deterministic safety controls.
+
+Never place a trade if required data is stale, missing, contradictory, or unverified.
+
+Never silently change a configured risk limit.
+
+---
+
+PART 15 — THREE STRICT DEVELOPMENT PHASES
+
+The entire project must be built in exactly three major phases.
+
+Each phase must be completed, audited, corrected, re-audited, and approved before the next phase begins.
+
+PHASE 1 — FOUNDATION AND CORE INFRASTRUCTURE
+
+Objective:
+
+Build the complete technical foundation before implementing real trading intelligence or automatic execution.
+
+Scope:
+
+1. Final architecture.
+2. Project structure.
+3. TradingView Foundation V1.
+4. MT5 EA Foundation.
+5. Backend foundation.
+6. Firebase evaluation and required setup.
+7. Private owner authentication.
+8. Private dashboard.
+9. Data schemas.
+10. Communication contracts.
+11. DEMO/LIVE data model.
+12. Logging.
+13. Error handling.
+14. Security rules.
+15. Testing infrastructure.
+16. Build and CI infrastructure.
+17. Documentation.
+
+No BUY/SELL strategy signals.
+
+No automatic order execution.
+
+No real-money trading.
+
+PHASE 1 AUDIT GATE
+
+Audit all Phase 1 requirements.
+
+Mandatory audits:
+
+- Architecture audit.
+- Complete source-code review.
+- TradingView code audit.
+- MQL5 code audit.
+- Backend audit.
+- Firebase audit.
+- Security audit.
+- Data integrity audit.
+- Mobile UI audit.
+- Unit tests.
+- Integration tests.
+- Negative tests.
+- Build verification.
+- Regression testing.
+- Documentation review.
+
+A visually complete dashboard is not proof of a functioning system.
+
+Do not pass Phase 1 if critical features are only placeholders.
+
+Do not pass Phase 1 if important security or data-integrity defects remain.
+
+If the required MT5 or TradingView execution environment is unavailable, report BLOCKED or NOT TESTED. Do not invent successful results.
+
+After the audit, submit a complete report and STOP.
+
+Wait for the Founder’s explicit instruction:
+
+APPROVE PHASE 1
+
+Only then may Phase 2 begin.
+
+---
+
+PHASE 2 — TWELVE BRAINS, INTELLIGENCE AND STRATEGY RESEARCH
+
+Objective:
+
+Implement and validate the intelligence layer and determine which strategy deserves further development.
+
+Scope:
+
+1. Define final specifications for all 12 Brains.
+2. Implement each Brain independently.
+3. Validate its input data.
+4. Validate its output.
+5. Test each Brain independently.
+6. Implement supporting intelligence services.
+7. Implement Central Decision Engine.
+8. Implement independent Risk & Safety Supervisor.
+9. Implement decision explanations.
+10. Implement decision logs.
+11. Define all three candidate strategies objectively.
+12. Backtest and compare all three strategies.
+13. Complete out-of-sample and walk-forward testing.
+14. Analyse robustness and overfitting.
+15. Select a strategy only when the evidence supports it.
+
+Each Brain must have:
+
+- Written specification.
+- Input schema.
+- Output schema.
+- Decision logic or model.
+- Data-source documentation.
+- Freshness requirements.
+- Confidence methodology.
+- Failure behaviour.
+- Unit tests.
+- Integration tests.
+- Limitations.
+
+AI and intelligence modules may use deterministic algorithms, statistical models, or machine-learning techniques as appropriate.
+
+Do not label ordinary rules as advanced AI.
+
+Do not add an LLM that can freely place trades.
+
+No automatic live order execution during this phase.
+
+PHASE 2 AUDIT GATE
+
+Audit every Brain separately and the complete intelligence system together.
+
+Mandatory checks:
+
+- All 12 Brain specifications.
+- All 12 implementations.
+- Input and output integrity.
+- Data-source validity.
+- No fake intelligence outputs.
+- Central Decision Engine.
+- Conflicting-signal handling.
+- Independent Risk Supervisor.
+- Strategy A testing.
+- Strategy B testing.
+- Strategy C testing.
+- Out-of-sample results.
+- Walk-forward results.
+- Robustness tests.
+- Security review.
+- Full integration tests.
+- Regression tests.
+- Build verification.
+- Documentation.
+
+Do not pass Phase 2 because the system generates attractive signals.
+
+Require reproducible evidence.
+
+Submit the full report and STOP.
+
+Wait for:
+
+APPROVE PHASE 2
+
+Only then may Phase 3 begin.
+
+---
+
+PHASE 3 — MT5 AUTOMATIC EXECUTION, TRADE MANAGEMENT AND FULL VALIDATION
+
+Objective:
+
+Integrate the approved intelligence and strategy system with MT5 and validate safe operation.
+
+Scope:
+
+1. Final MT5 integration.
+2. Trade request architecture.
+3. Order execution.
+4. Broker response validation.
+5. Position identification.
+6. Stop-loss management.
+7. Take-profit management.
+8. Position sizing.
+9. Break-even.
+10. Trailing stop.
+11. Partial close where approved.
+12. Emergency exit.
+13. Duplicate-order protection.
+14. Execution failure handling.
+15. Network loss handling.
+16. Restart recovery.
+17. Position reconciliation.
+18. Trade history verification.
+19. Performance analytics.
+20. Full system monitoring.
+
+The execution engine must verify actual broker transaction results.
+
+The system must never assume an order succeeded just because an API or trade request was sent.
+
+Use MT5 transaction events and actual account/position information to reconcile state.
+
+15.1 Demo validation
+
+Before considering live use:
+
+- Complete the approved backtesting protocol.
+- Complete out-of-sample validation.
+- Complete walk-forward validation.
+- Complete robustness testing.
+- Conduct approximately 8–12 weeks of Demo forward evaluation.
+- Check execution quality.
+- Check risk enforcement.
+- Check restart recovery.
+- Check broker compatibility.
+- Review all errors and unexpected behaviour.
+
+15.2 Live trading restriction
+
+Do not activate real-money trading automatically.
+
+Live trading requires a separate Founder decision after the complete Phase 3 audit and review.
+
+A successful Demo test does not guarantee live profitability or execution quality.
+
+PHASE 3 FINAL AUDIT GATE
+
+Complete:
+
+- Full code audit.
+- Full architecture audit.
+- Security audit.
+- MT5 execution audit.
+- Risk enforcement audit.
+- Position management audit.
+- Data integrity audit.
+- Failure and recovery audit.
+- Strategy validation audit.
+- Performance audit.
+- Demo forward evaluation report.
+- Final unresolved-risk report.
+- Production-readiness assessment.
+
+Only after this may the system be assessed as ready for a separate live-trading approval decision.
+
+---
+
+PART 16 — STRICT PHASE AUDIT AND APPROVAL POLICY
+
+This is one of the most important requirements of AEGIS XAU.
+
+The development sequence is:
+
+BUILD → TEST → AUDIT → IDENTIFY DEFECTS → FIX → RE-TEST → RE-AUDIT → PASS → FOUNDER APPROVAL → NEXT PHASE
+
+There are only three audit outcomes:
+
+PASS
+
+All mandatory acceptance criteria are met and supported by actual evidence.
+
+The Founder reviews the report and explicitly approves the next phase.
+
+FAIL
+
+One or more mandatory requirements are not satisfied.
+
+Fix the defects in the current phase.
+
+Repeat the relevant tests and complete a new audit.
+
+Do not proceed.
+
+BLOCKED
+
+Required tools, credentials, hardware, platform access, or testing environments are unavailable.
+
+Explain the blocker.
+
+Do not claim PASS.
+
+16.1 No automatic phase progression
+
+You are never authorised to begin the next phase merely because you believe the current phase is complete.
+
+Only the Founder can approve the next phase.
+
+16.2 Audit evidence
+
+Every audit must include:
+
+- File-by-file review.
+- Feature-by-feature review.
+- Requirements traceability.
+- Actual test commands.
+- Actual test outputs.
+- Build output.
+- Security findings.
+- Defect list.
+- Severity levels.
+- Fix evidence.
+- Remaining risks.
+- Screenshots or logs where useful.
+
+Never invent test output.
+
+Never claim an independent audit if only a self-review was performed.
+
+16.3 Defect severity
+
+Use:
+
+- P0 — Critical security, capital protection, or data-integrity failure.
+- P1 — Major functionality or reliability failure.
+- P2 — Moderate defect.
+- P3 — Minor issue or improvement.
+
+No unresolved P0 or P1 issue may be accepted for a Phase PASS.
+
+P2 and P3 items must be documented and reviewed by the Founder; do not silently defer them.
+
+---
+
+PART 17 — DEVELOPMENT TECHNOLOGY AND ARCHITECTURE SELECTION
+
+Do not blindly choose a technology stack.
+
+Evaluate and justify each component.
+
+Potential technologies include:
+
+- MQL5 for the MT5 Expert Advisor.
+- Pine Script for TradingView.
+- TypeScript/JavaScript for dashboard and backend where suitable.
+- React for the private dashboard if justified.
+- Node.js or another suitable backend runtime.
+- Firebase Authentication.
+- Cloud Firestore.
+- Firebase Emulator Suite.
+- Secure backend hosting.
+- GitHub for version control.
+- Automated testing and CI.
+
+Compare architecture choices:
+
+A. Native MT5-centric architecture.
+
+B. Hybrid architecture with MT5 execution, backend intelligence, TradingView foundation, and private dashboard.
+
+C. Backend-centric architecture with MT5 acting as the broker execution interface.
+
+For each option, explain:
+
+- Reliability.
+- Latency.
+- Security.
+- Cost.
+- Complexity.
+- Data access.
+- Maintenance.
+- Recovery.
+- Mobile usability.
+- Testing requirements.
+
+Recommend one architecture and explain why.
+
+Do not treat the recommendation as Founder-approved until explicitly accepted.
+
+---
+
+PART 18 — DEVELOPMENT ENVIRONMENT AND PRACTICAL LIMITATIONS
+
+The Founder primarily uses an Android device for project work.
+
+You must consider practical development limitations.
+
+Explain:
+
+- Which tasks can be completed using Android.
+- Which tasks require a desktop environment.
+- Whether Windows MT5 and MetaEditor are required.
+- Whether a VPS is needed for continuous operation.
+- How MQL5 compilation will be verified.
+- How MT5 Strategy Tester will be used.
+- How Demo forward testing will be monitored.
+
+Do not claim MQL5 compilation, MT5 backtesting, or live broker integration was tested unless it actually was.
+
+Google AI Studio is an AI development assistant; do not assume it automatically has access to the Founder’s Firebase project, MT5 terminal, GitHub repository, or local computer.
+
+Clearly identify manual steps that the Founder must perform.
+
+---
+
+PART 19 — PROJECT DOCUMENTATION AND FILE ORGANISATION
+
+Create and maintain documentation throughout development.
+
+At minimum, plan for:
+
+1. README.md
+2. MASTER_PROJECT_SPEC.md
+3. SYSTEM_ARCHITECTURE.md
+4. REQUIREMENTS_TRACEABILITY.md
+5. PHASE_ROADMAP.md
+6. PHASE_1_ACCEPTANCE_CRITERIA.md
+7. PHASE_2_ACCEPTANCE_CRITERIA.md
+8. PHASE_3_ACCEPTANCE_CRITERIA.md
+9. TRADINGVIEW_SPEC.md
+10. MT5_EA_SPEC.md
+11. DATA_PROTOCOL.md
+12. API_SPECIFICATION.md
+13. FIREBASE_SECURITY.md
+14. RISK_MANAGEMENT_SPEC.md
+15. TWELVE_BRAINS_SPEC.md
+16. CENTRAL_DECISION_ENGINE.md
+17. STRATEGY_RESEARCH_PROTOCOL.md
+18. TESTING_STRATEGY.md
+19. SECURITY_THREAT_MODEL.md
+20. DEPLOYMENT_AND_RECOVERY.md
+21. CHANGELOG.md
+22. AUDIT_REPORTS/
+
+Documentation must match the actual code.
+
+Do not create documents claiming features are implemented when they are only planned.
+
+---
+
+PART 20 — NON-NEGOTIABLE DEVELOPMENT RULES
+
+1. Do not write code before the Master Blueprint is reviewed and approved.
+
+2. Do not begin all three phases at once.
+
+3. Do not skip Phase 1 audit.
+
+4. Do not skip Phase 2 audit.
+
+5. Do not skip Phase 3 audit.
+
+6. Do not enable automatic trading in Phase 1.
+
+7. Do not enable live order execution without separate Founder approval.
+
+8. Do not mix Demo and Live data.
+
+9. Do not fabricate Brain outputs.
+
+10. Do not claim access to private bank orders or institutional intentions.
+
+11. Do not assume every SMC pattern is profitable.
+
+12. Do not invent market data, economic news, or backtest results.
+
+13. Do not silently modify the Founder’s risk settings.
+
+14. Do not weaken security rules to make development easier.
+
+15. Do not expose credentials or private keys.
+
+16. Do not deploy, publish, or push changes without explicit permission.
+
+17. Do not delete the existing project or overwrite its repository.
+
+18. Build the new project in a separate clean codebase after architecture approval.
+
+19. Do not copy old code without inspecting and justifying it.
+
+20. Do not add unrequested commercial features.
+
+21. Do not mark any feature complete without evidence.
+
+22. Do not mark any phase PASS without its complete audit.
+
+23. Do not proceed without explicit Founder approval.
+
+Core engineering principles:
+
+NO PROOF = NOT VERIFIED.
+
+NO TEST = NOT CONFIRMED.
+
+NO AUDIT PASS = NO NEXT PHASE.
+
+NO FOUNDER APPROVAL = DO NOT PROCEED.
+
+---
+
+PART 21 — YOUR FIRST TASK: COMPLETE PROJECT UNDERSTANDING ONLY
+
+Do not create any code yet.
+
+Do not create a Firebase project.
+
+Do not ask for Firebase credentials.
+
+Do not generate a complete application.
+
+Do not start Phase 1.
+
+First, study this entire specification and prepare a complete Master Project Blueprint.
+
+Your first response must contain all of the following:
+
+A. Project understanding
+
+Explain what AEGIS XAU is, its purpose, and its final intended capabilities.
+
+B. Complete system architecture
+
+Show how TradingView, MT5, backend, database, twelve Brains, Central Decision Engine, Risk & Safety Supervisor, execution engine, and dashboard work together.
+
+C. Twelve Brain architecture
+
+Explain the responsibility, inputs, outputs, limitations, and dependencies of all 12 Brains.
+
+D. Supporting system engines
+
+Explain the roles of Session Intelligence, Volatility, News & Event Risk, Strategy, Entry Quality, Execution Quality, Trade Management, and Logging.
+
+E. TradingView Foundation V1
+
+Explain the complete non-trading scope and its acceptance criteria.
+
+F. MT5 EA Foundation
+
+Explain the complete non-trading foundation and its acceptance criteria.
+
+G. Strategy research
+
+Explain how all three candidate strategies will be specified and tested fairly.
+
+H. Risk architecture
+
+Explain the independent Risk & Safety Supervisor and identify any risk-rule definitions that still require Founder confirmation.
+
+I. Backend and Firebase
+
+Recommend the necessary services and explain why each one is required. Identify services that are unnecessary.
+
+J. Security architecture
+
+Explain account authentication, DEMO/LIVE separation, data provenance, API security, Firebase security, and secret management.
+
+K. Dashboard
+
+Explain all private dashboard sections and their responsibilities.
+
+L. Three-phase implementation plan
+
+List every major feature, its dependencies, and its acceptance criteria for each phase.
+
+M. Phase audit plan
+
+Explain exactly how each phase will be tested, audited, corrected, re-audited, and approved.
+
+N. Technology recommendations
+
+Compare the architecture options and recommend a suitable technology stack.
+
+O. Practical development plan
+
+Explain Android, desktop, MetaEditor, MT5 Strategy Tester, VPS, Firebase Console, and any required manual setup.
+
+P. Missing requirements
+
+Identify everything that is unclear, technically uncertain, conflicting, or still needs a Founder decision.
+
+Separate:
+
+- Confirmed Founder requirements.
+- Current architecture proposals.
+- Unresolved decisions.
+- External technical limitations.
+
+Do not silently convert proposals into confirmed decisions.
+
+Q. Final readiness assessment
+
+Explain whether the requirements are sufficiently clear to begin Phase 1 and list the exact prerequisites.
+
+---
+
+FINAL INSTRUCTION
+
+Your first response is a project-understanding and architecture document only.
+
+It must be detailed enough that another qualified engineer could understand the complete AEGIS XAU vision without relying on previous conversations.
+
+Do not omit major systems, responsibilities, risks, dependencies, or phase gates.
+
+Do not write code yet.
+
+Do not claim the project is built.
+
+Do not claim any Brain is operational.
+
+Do not claim any strategy is profitable.
+
+Do not claim any test has passed.
+
+After presenting the complete Master Project Blueprint, stop and wait for the Founder to review it.
+
+The Founder will decide whether to approve the architecture and begin Phase 1.
+
+AEGIS XAU must be built carefully, completely, transparently, and phase by phase.

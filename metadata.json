@@ -1,0 +1,6 @@
+{
+  "name": "AEGIS XAU — Phase 1 Read-Only Monitor",
+  "description": "Private Single-Owner XAUUSD Multi-Brain Trading Intelligence and Execution Ecosystem (Phase 1 Read-Only Foundation).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
